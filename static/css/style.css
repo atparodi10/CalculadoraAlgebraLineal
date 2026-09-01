@@ -119,6 +119,28 @@ body {
     margin: 2rem 0;
 }
 
+.equation-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.equation-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px;
+    font-size: 1.1rem;
+    border: 2px solid #ccc;
+    border-radius: var(--border-radius);
+    transition: border-color 0.3s;
+}
+
+.equation-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
 /* Media Queries para teléfonos */
 @media (max-width: 600px) {
     .calculator { padding: 1rem; }
