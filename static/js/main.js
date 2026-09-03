@@ -12,8 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
         n = parseInt(document.getElementById('input-n').value);
         
         equationList.innerHTML = '';
-
-        // Genera cajas de texto en lugar de la cuadrícula de matriz
         for (let i = 0; i < m; i++) {
             const input = document.createElement('input');
             input.type = 'text';
@@ -27,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     btnSolve.addEventListener('click', async () => {
+        const metodo = document.getElementById('select-method').value;
         const ecuaciones = [];
         let formatoValido = true;
 
@@ -43,16 +42,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const response = await fetch('/calcular', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ m, n, ecuaciones })
+            body: JSON.stringify({ m, n, metodo, ecuaciones })
         });
         
         const data = await response.json();
-        
         if (response.status === 400) {
             alert(data.error);
             return;
         }
-        
         renderResults(data);
     });
 
@@ -60,32 +57,35 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsSection.innerHTML = '';
         resultsSection.classList.remove('hidden');
 
-        // 1. Renderizar pasos de la eliminación por filas
+        // Renderizado visual de matrices con BEM
         data.pasos.forEach((paso, index) => {
             const stepDiv = document.createElement('div');
             stepDiv.className = 'results__step';
             
-            let matrixText = paso.matriz.map(row => 
-                row.map(val => val.toFixed(2).padStart(8, ' ')).join(' | ')
-            ).join('\n');
+            let matrixHTML = '<div class="matrix">';
+            paso.matriz.forEach(row => {
+                matrixHTML += '<div class="matrix__row">';
+                row.forEach((val, idx) => {
+                    const cellClass = (idx === row.length - 1) ? 'matrix__cell matrix__cell--result' : 'matrix__cell';
+                    matrixHTML += `<div class="${cellClass}">${val.toFixed(2)}</div>`;
+                });
+                matrixHTML += '</div>';
+            });
+            matrixHTML += '</div>';
 
-            stepDiv.innerHTML = `
-                <p><strong>Paso ${index}:</strong> ${paso.mensaje}</p>
-                <div class="results__matrix">${matrixText}</div>
-            `;
+            stepDiv.innerHTML = `<p style="text-align:left;"><strong>Paso ${index}:</strong> ${paso.mensaje}</p>${matrixHTML}`;
             resultsSection.appendChild(stepDiv);
         });
 
-        // 2. Mostrar clasificación del sistema
         const classDiv = document.createElement('div');
         classDiv.className = 'results__classification';
         classDiv.innerText = data.tipo_sistema;
         resultsSection.appendChild(classDiv);
 
-        // 3. Renderizar el proceso de sustitución de ecuaciones
         if (data.pasos_ecuaciones && data.pasos_ecuaciones.length > 0) {
             const eqDiv = document.createElement('div');
             eqDiv.className = 'results__step';
+            eqDiv.style.textAlign = 'left';
             let eqHTML = '<h3>Análisis de las Ecuaciones:</h3><ul>';
             data.pasos_ecuaciones.forEach(line => {
                 if(line.includes("Fila") || line.includes("x")) {
@@ -99,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsSection.appendChild(eqDiv);
         }
 
-        // 4. Mostrar comprobación automática
         if (data.soluciones && data.soluciones.length > 0) {
             let solHTML = '<h3>Comprobación Automática:</h3><ul>';
             data.verificacion.forEach(v => {
@@ -108,6 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
             solHTML += '</ul>';
             
             const solDiv = document.createElement('div');
+            solDiv.className = 'results__step';
+            solDiv.style.textAlign = 'left';
             solDiv.innerHTML = solHTML;
             resultsSection.appendChild(solDiv);
         }
