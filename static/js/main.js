@@ -4,14 +4,47 @@ document.addEventListener('DOMContentLoaded', () => {
     const equationContainer = document.getElementById('equation-container');
     const equationList = document.getElementById('equation-list');
     const resultsSection = document.getElementById('results');
+    const uiAlert = document.getElementById('ui-alert');
 
     let m = 3, n = 3;
+
+    // Función modular para mostrar alertas en pantalla
+    function mostrarAlerta(mensaje, tipo = 'error') {
+        uiAlert.textContent = mensaje;
+        uiAlert.className = `alert alert--${tipo}`;
+        uiAlert.classList.remove('hidden');
+        
+        // Ocultar automáticamente después de 5 segundos
+        setTimeout(() => {
+            uiAlert.classList.add('hidden');
+        }, 5000);
+    }
 
     btnGenerate.addEventListener('click', () => {
         m = parseInt(document.getElementById('input-m').value);
         n = parseInt(document.getElementById('input-n').value);
         
+        // Lectura de memoria RAM (retorna GB). Usa 4GB por defecto si el navegador no lo soporta.
+        const ramGB = navigator.deviceMemory || 4; 
+        
+        // El límite real en la web no es la matemática, sino renderizar las cajas de texto en el DOM.
+        // Se calculan aprox 250 celdas máximas permitidas por cada GB de RAM para evitar bloqueos.
+        const celdasTotales = m * n;
+        const limiteCeldas = ramGB * 250; 
+
+        if (celdasTotales > limiteCeldas) {
+            mostrarAlerta(`Tu dispositivo (${ramGB}GB RAM) no soporta procesar ${celdasTotales} celdas de forma óptima. Reduce el tamaño de la matriz.`, 'warning');
+            return;
+        }
+
+        if (m <= 0 || n <= 0) {
+            mostrarAlerta('Las dimensiones de la matriz deben ser mayores a 0.', 'error');
+            return;
+        }
+        
+        uiAlert.classList.add('hidden');
         equationList.innerHTML = '';
+        
         for (let i = 0; i < m; i++) {
             const input = document.createElement('input');
             input.type = 'text';
@@ -35,29 +68,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         if (!formatoValido) {
-            alert("Por favor, llena todos los campos de ecuaciones.");
+            mostrarAlerta('Por favor, llena todos los campos de ecuaciones antes de resolver.', 'error');
             return;
         }
 
-        const response = await fetch('/calcular', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ m, n, metodo, ecuaciones })
-        });
-        
-        const data = await response.json();
-        if (response.status === 400) {
-            alert(data.error);
-            return;
+        uiAlert.classList.add('hidden');
+
+        try {
+            const response = await fetch('/calcular', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ m, n, metodo, ecuaciones })
+            });
+            
+            const data = await response.json();
+            
+            if (response.status === 400) {
+                mostrarAlerta(data.error, 'error');
+                return;
+            }
+            
+            renderResults(data);
+        } catch (error) {
+            mostrarAlerta('Error de conexión con el servidor. Verifica que Flask esté ejecutándose.', 'error');
         }
-        renderResults(data);
     });
 
     function renderResults(data) {
         resultsSection.innerHTML = '';
         resultsSection.classList.remove('hidden');
 
-        // Renderizado visual de matrices con BEM
         data.pasos.forEach((paso, index) => {
             const stepDiv = document.createElement('div');
             stepDiv.className = 'results__step';

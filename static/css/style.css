@@ -192,6 +192,28 @@ body {
     font-weight: bold;
 }
 
+/* Componente de Alertas Visuales */
+.alert {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--border-radius);
+    font-weight: bold;
+    text-align: center;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.alert--error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.alert--warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeeba;
+}
+
 /* Media Queries para teléfonos */
 @media (max-width: 600px) {
     .calculator { padding: 1rem; }
