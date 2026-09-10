@@ -8,13 +8,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let m = 3, n = 3;
 
-    // Función modular para mostrar alertas en pantalla
     function mostrarAlerta(mensaje, tipo = 'error') {
         uiAlert.textContent = mensaje;
         uiAlert.className = `alert alert--${tipo}`;
         uiAlert.classList.remove('hidden');
         
-        // Ocultar automáticamente después de 5 segundos
         setTimeout(() => {
             uiAlert.classList.add('hidden');
         }, 5000);
@@ -24,11 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         m = parseInt(document.getElementById('input-m').value);
         n = parseInt(document.getElementById('input-n').value);
         
-        // Lectura de memoria RAM (retorna GB). Usa 4GB por defecto si el navegador no lo soporta.
         const ramGB = navigator.deviceMemory || 4; 
-        
-        // El límite real en la web no es la matemática, sino renderizar las cajas de texto en el DOM.
-        // Se calculan aprox 250 celdas máximas permitidas por cada GB de RAM para evitar bloqueos.
         const celdasTotales = m * n;
         const limiteCeldas = ramGB * 250; 
 

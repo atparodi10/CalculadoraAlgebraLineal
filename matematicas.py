@@ -39,9 +39,22 @@ def verificar_solucion(A, b, soluciones):
         verificacion.append({"ecuacion": i+1, "calculado": round(suma, 4), "esperado": round(b[i], 4), "valido": abs(suma - b[i]) < 1e-5})
     return verificacion
 
+def extraer_ecuaciones_finales(M, m, n):
+    ecuaciones = []
+    for i in range(m):
+        if not all(abs(M[i][j]) < 1e-10 for j in range(n)):
+            terminos = []
+            for j in range(n):
+                if abs(M[i][j]) > 1e-10:
+                    terminos.append(f"{round(M[i][j], 4)}x{j+1}")
+            eq_str = " + ".join(terminos).replace("+ -", "- ")
+            ecuaciones.append(f"{eq_str} = {round(M[i][n], 4)}")
+    return ecuaciones
+
 def resolver_gauss(A, b, m, n):
     M = [A[i][:] + [b[i]] for i in range(m)]
     pasos = []
+    columnas_pivote = []
     
     def guardar_paso(mensaje, matriz_actual):
         pasos.append({"mensaje": mensaje, "matriz": clonar_matriz(matriz_actual)})
@@ -58,6 +71,8 @@ def resolver_gauss(A, b, m, n):
                 pivote = i
 
         if abs(M[pivote][col]) < 1e-10: continue 
+        
+        columnas_pivote.append(col + 1)
 
         if pivote != fila_actual:
             M[fila_actual], M[pivote] = M[pivote], M[fila_actual]
@@ -72,20 +87,25 @@ def resolver_gauss(A, b, m, n):
         
         fila_actual += 1
 
-    tipo_sistema = "Sistema Consistente Determinado: Presenta Solución Única"
+    # Inicia el registro de pasos sin importar el tipo de sistema
+    pasos_ecuaciones = [f"Columnas pivote identificadas: {', '.join(map(str, columnas_pivote))}"]
     soluciones = []
-    pasos_ecuaciones = []
 
     for i in range(m):
         todos_ceros = all(abs(M[i][j]) < 1e-10 for j in range(n))
         if todos_ceros and abs(M[i][n]) > 1e-10:
-            return M, pasos, "Sistema Inconsistente: Sin Solución", [], []
+            pasos_ecuaciones.append(f"Inconsistencia encontrada en Fila {i+1}: 0 = {round(M[i][n], 4)}")
+            return M, pasos, "Sistema Inconsistente: Sin Solución", [], pasos_ecuaciones
 
     filas_no_nulas = sum(1 for i in range(m) if not all(abs(M[i][j]) < 1e-10 for j in range(n)))
     if filas_no_nulas < n:
-        return M, pasos, "Sistema Consistente Indeterminado: Presenta Infinitas Soluciones", [], []
+        pasos_ecuaciones.append("Ecuaciones simplificadas resultantes:")
+        pasos_ecuaciones.extend(extraer_ecuaciones_finales(M, m, n))
+        return M, pasos, "Sistema Consistente Indeterminado: Presenta Infinitas Soluciones", [], pasos_ecuaciones
 
+    tipo_sistema = "Sistema Consistente Determinado: Presenta Solución Única"
     pasos_ecuaciones.append("Despeje de variables (Sustitución hacia atrás):")
+    
     soluciones = [0] * n
     for i in range(n - 1, -1, -1):
         suma_conocida = sum(M[i][j] * soluciones[j] for j in range(i + 1, n))
@@ -101,6 +121,7 @@ def resolver_gauss(A, b, m, n):
 def resolver_gauss_jordan(A, b, m, n):
     M = [A[i][:] + [b[i]] for i in range(m)]
     pasos = []
+    columnas_pivote = []
     
     def guardar_paso(mensaje, matriz_actual):
         pasos.append({"mensaje": mensaje, "matriz": clonar_matriz(matriz_actual)})
@@ -117,6 +138,8 @@ def resolver_gauss_jordan(A, b, m, n):
                 pivote = i
 
         if abs(M[pivote][col]) < 1e-10: continue 
+
+        columnas_pivote.append(col + 1)
 
         if pivote != fila_actual:
             M[fila_actual], M[pivote] = M[pivote], M[fila_actual]
@@ -136,18 +159,23 @@ def resolver_gauss_jordan(A, b, m, n):
         
         fila_actual += 1
 
-    tipo_sistema = "Sistema Consistente Determinado: Presenta Solución Única"
+    pasos_ecuaciones = [f"Columnas pivote identificadas: {', '.join(map(str, columnas_pivote))}"]
     soluciones = []
-    pasos_ecuaciones = ["En Gauss-Jordan las soluciones se obtienen directamente de la última columna:"]
-
+    
     for i in range(m):
         todos_ceros = all(abs(M[i][j]) < 1e-10 for j in range(n))
         if todos_ceros and abs(M[i][n]) > 1e-10:
-            return M, pasos, "Sistema Inconsistente: Sin Solución", [], []
+            pasos_ecuaciones.append(f"Inconsistencia encontrada en Fila {i+1}: 0 = {round(M[i][n], 4)}")
+            return M, pasos, "Sistema Inconsistente: Sin Solución", [], pasos_ecuaciones
 
     filas_no_nulas = sum(1 for i in range(m) if not all(abs(M[i][j]) < 1e-10 for j in range(n)))
     if filas_no_nulas < n:
-        return M, pasos, "Sistema Consistente Indeterminado: Presenta Infinitas Soluciones", [], []
+        pasos_ecuaciones.append("Ecuaciones simplificadas resultantes:")
+        pasos_ecuaciones.extend(extraer_ecuaciones_finales(M, m, n))
+        return M, pasos, "Sistema Consistente Indeterminado: Presenta Infinitas Soluciones", [], pasos_ecuaciones
+
+    tipo_sistema = "Sistema Consistente Determinado: Presenta Solución Única"
+    pasos_ecuaciones.append("En Gauss-Jordan las soluciones se obtienen directamente de la última columna:")
 
     for i in range(n):
         soluciones.append(M[i][n])

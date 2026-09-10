@@ -72,53 +72,6 @@ body {
 
 .hidden { display: none; }
 
-.matrix-grid {
-    display: grid;
-    gap: 10px;
-    justify-content: center;
-    overflow-x: auto;
-    padding-bottom: 10px;
-}
-
-.matrix-cell {
-    width: 50px;
-    padding: 8px;
-    text-align: center;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-.matrix-cell--b {
-    border-left: 2px solid var(--primary-color);
-    background-color: #eef;
-}
-
-.results__step {
-    background: #fdfdfd;
-    border: 1px solid #eee;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: var(--border-radius);
-}
-
-.results__matrix {
-    font-family: monospace;
-    white-space: pre;
-    background: #272822;
-    color: #f8f8f2;
-    padding: 1rem;
-    border-radius: 4px;
-    overflow-x: auto;
-}
-
-.results__classification {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--primary-color);
-    text-align: center;
-    margin: 2rem 0;
-}
-
 .equation-list {
     display: flex;
     flex-direction: column;
@@ -141,7 +94,25 @@ body {
     border-color: var(--primary-color);
 }
 
-/* Nuevo Componente Matriz BEM */
+.results__step {
+    background: #fdfdfd;
+    border: 1px solid #eee;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: var(--border-radius);
+    overflow-x: auto;
+    text-align: center;
+}
+
+.results__classification {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    text-align: center;
+    margin: 2rem 0;
+}
+
+/* Matrices */
 .matrix {
     display: inline-block;
     position: relative;
@@ -159,22 +130,10 @@ body {
     border: 2px solid var(--primary-color);
 }
 
-.matrix::before {
-    left: 0;
-    border-right: none;
-    border-radius: 4px 0 0 4px;
-}
+.matrix::before { left: 0; border-right: none; border-radius: 4px 0 0 4px; }
+.matrix::after { right: 0; border-left: none; border-radius: 0 4px 4px 0; }
 
-.matrix::after {
-    right: 0;
-    border-left: none;
-    border-radius: 0 4px 4px 0;
-}
-
-.matrix__row {
-    display: flex;
-    justify-content: center;
-}
+.matrix__row { display: flex; justify-content: center; }
 
 .matrix__cell {
     min-width: 60px;
@@ -192,7 +151,7 @@ body {
     font-weight: bold;
 }
 
-/* Componente de Alertas Visuales */
+/* Alertas */
 .alert {
     padding: 1rem;
     margin-bottom: 1.5rem;
@@ -214,10 +173,8 @@ body {
     border: 1px solid #ffeeba;
 }
 
-/* Media Queries para teléfonos */
 @media (max-width: 600px) {
     .calculator { padding: 1rem; }
     .config { flex-direction: column; align-items: stretch; }
     .btn { width: 100%; }
-    .matrix-cell { width: 40px; font-size: 0.9rem; padding: 5px; }
 }
