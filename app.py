@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from matematicas import parsear_ecuacion, resolver_gauss, resolver_gauss_jordan, verificar_solucion
+from matematicas import parsear_ecuacion, resolver_gauss, resolver_gauss_jordan, resolver_pivote, verificar_solucion
 
 app = Flask(__name__)
 
@@ -25,6 +25,8 @@ def calcular():
         
     if metodo == 'gauss_jordan':
         matriz_final, pasos, tipo, soluciones, pasos_ecuaciones = resolver_gauss_jordan(A, b, m, n)
+    elif metodo == 'pivote':
+        matriz_final, pasos, tipo, soluciones, pasos_ecuaciones = resolver_pivote(A, b, m, n)
     else:
         matriz_final, pasos, tipo, soluciones, pasos_ecuaciones = resolver_gauss(A, b, m, n)
         
