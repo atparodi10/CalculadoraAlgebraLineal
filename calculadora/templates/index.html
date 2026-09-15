@@ -12,6 +12,17 @@
             <h1 class="calculator__title">Calculadora de Sistemas de Ecuaciones</h1>
         </div>
 
+        <div class="config">
+            <div class="config__group">
+                <label for="modulo-activo">Función:</label>
+                <select class="config__input" style="width: auto;" id="modulo-activo" aria-controls="modulo-ecuaciones modulo-conversion">
+                    <option value="ecuaciones">Sistemas de ecuaciones</option>
+                    <option value="conversion">Sistemas numéricos</option>
+                </select>
+            </div>
+        </div>
+
+        <section id="modulo-ecuaciones" aria-label="Sistemas de ecuaciones">
         <div id="ui-alert" class="alert hidden"></div>
         
         <div class="config">
@@ -40,8 +51,46 @@
         </div>
 
         <div id="results" class="hidden"></div>
+        </section>
+
+        <section id="modulo-conversion" class="hidden" aria-label="Sistemas numéricos">
+        <div id="conversion-alert" class="alert alert--error hidden" role="alert"></div>
+
+        <form id="conversion-form">
+            <div class="config">
+                <div class="config__group">
+                    <label for="conversion-mode">Conversión:</label>
+                    <select class="config__input" style="width: auto; max-width: 100%;" id="conversion-mode">
+                        <option value="desde_decimal">Decimal a otra base</option>
+                        <option value="a_decimal">Otra base a decimal</option>
+                    </select>
+                </div>
+                <div class="config__group">
+                    <label id="conversion-base-label" for="conversion-base">Base de destino:</label>
+                    <select class="config__input" style="width: auto;" id="conversion-base">
+                        <option value="2">Binario (2)</option>
+                        <option value="8">Octal (8)</option>
+                        <option value="16">Hexadecimal (16)</option>
+                        <option value="10" hidden disabled>Decimal (10)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="equation-list">
+                <label for="conversion-number" id="conversion-number-label">Número decimal:</label>
+                <input class="equation-input" type="text" id="conversion-number" maxlength="66"
+                       placeholder="Ej.: 25 o 25.5" autocomplete="off" spellcheck="false"
+                       aria-describedby="conversion-help" required>
+                <small id="conversion-help">Hasta 64 dígitos. Podés usar signo y punto o coma para la parte fraccionaria. No uses separadores de miles ni prefijos como 0b o 0x.</small>
+            </div>
+            <button class="btn btn--success" type="submit" id="conversion-submit">Convertir número</button>
+        </form>
+
+        <div id="conversion-results" class="hidden" aria-live="polite"></div>
+        </section>
     </div>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/conversion.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/modulos.js') }}"></script>
 </body>
 </html>
