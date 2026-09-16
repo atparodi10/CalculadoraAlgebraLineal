@@ -98,9 +98,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ==========================================
+    // NUEVO: FORZAR MENSAJE DE REQUIRED EN ESPAÑOL
+    // ==========================================
+    number.addEventListener('invalid', (event) => {
+        if (event.target.validity.valueMissing) {
+            event.target.setCustomValidity('Por favor, ingresa un número para realizar la conversión.');
+        }
+    });
+
+    number.addEventListener('input', (event) => {
+        // Limpiamos el error nativo en cuanto el usuario empiece a escribir
+        event.target.setCustomValidity(''); 
+        invalidarResultado();
+    });
+    // ==========================================
+
     mode.addEventListener('change', actualizarSeleccion);
     base.addEventListener('change', actualizarSeleccion);
-    number.addEventListener('input', invalidarResultado);
     form.addEventListener('submit', convertir);
     actualizarSeleccion();
 });

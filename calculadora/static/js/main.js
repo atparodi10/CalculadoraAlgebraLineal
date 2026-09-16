@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         setTimeout(() => {
             uiAlert.classList.add('hidden');
-        }, 5000);
+        }, 7000);
     }
 
     btnGenerate.addEventListener('click', () => {
@@ -54,15 +54,30 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSolve.addEventListener('click', async () => {
         const metodo = document.getElementById('select-method').value;
         const ecuaciones = [];
-        let formatoValido = true;
+        
+        let camposVacios = false;
+        let faltaSignoIgual = false;
 
         document.querySelectorAll('.equation-input').forEach(input => {
-            if (input.value.trim() === '') formatoValido = false;
-            ecuaciones.push(input.value);
+            const val = input.value.trim();
+            
+            if (val === '') {
+                camposVacios = true;
+            } else if (!val.includes('=')) {
+                faltaSignoIgual = true;
+            }
+            
+            ecuaciones.push(val);
         });
 
-        if (!formatoValido) {
-            mostrarAlerta('Por favor, llena todos los campos de ecuaciones antes de resolver.', 'error');
+        // Validaciones específicas
+        if (camposVacios) {
+            mostrarAlerta('Datos nulos: Por favor, asegúrate de no dejar ninguna ecuación en blanco.', 'error');
+            return;
+        }
+
+        if (faltaSignoIgual) {
+            mostrarAlerta('Formato inválido: Toda ecuación debe contener el signo de igualdad "=" (Ej: 2x1 = 4).', 'error');
             return;
         }
 

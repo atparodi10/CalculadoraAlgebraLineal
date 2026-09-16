@@ -15,82 +15,152 @@
         <div class="config">
             <div class="config__group">
                 <label for="modulo-activo">Función:</label>
-                <select class="config__input" style="width: auto;" id="modulo-activo" aria-controls="modulo-ecuaciones modulo-conversion">
+                <select class="config__input" style="width: auto;" id="modulo-activo" aria-controls="modulo-ecuaciones modulo-conversion modulo-vectores modulo-matrices">
                     <option value="ecuaciones">Sistemas de ecuaciones</option>
                     <option value="conversion">Sistemas numéricos</option>
+                    <option value="vectores">Vectores (Rn) y Comb. Lineal</option>
+                    <option value="matrices">Operaciones Matriciales</option>
                 </select>
             </div>
         </div>
 
+        <!-- Módulo 1: Sistemas de Ecuaciones -->
         <section id="modulo-ecuaciones" aria-label="Sistemas de ecuaciones">
-        <div id="ui-alert" class="alert hidden"></div>
-        
-        <div class="config">
-            <div class="config__group">
-                <label>Filas (m):</label>
-                <input class="config__input" type="number" id="input-m" value="3" min="1">
-            </div>
-            <div class="config__group">
-                <label>Variables (n):</label>
-                <input class="config__input" type="number" id="input-n" value="3" min="1">
-            </div>
-            <div class="config__group">
-                <label>Método:</label>
-                <select id="select-method" class="config__input" style="width: auto;">
-                    <option value="gauss">Eliminación de Gauss</option>
-                    <option value="gauss_jordan">Gauss-Jordan</option>
-                    <option value="pivote">Método del Pivote (Dos Fases)</option>
-                </select>
-            </div>
-            <button class="btn btn--primary" id="btn-generate">Generar Campos</button>
-        </div>
-
-        <div id="equation-container" class="hidden">
-            <div id="equation-list" class="equation-list"></div>
-            <button class="btn btn--success" id="btn-solve">Resolver Sistema</button>
-        </div>
-
-        <div id="results" class="hidden"></div>
-        </section>
-
-        <section id="modulo-conversion" class="hidden" aria-label="Sistemas numéricos">
-        <div id="conversion-alert" class="alert alert--error hidden" role="alert"></div>
-
-        <form id="conversion-form">
+            <div id="ui-alert" class="alert hidden"></div>
+            
             <div class="config">
                 <div class="config__group">
-                    <label for="conversion-mode">Conversión:</label>
-                    <select class="config__input" style="width: auto; max-width: 100%;" id="conversion-mode">
-                        <option value="desde_decimal">Decimal a otra base</option>
-                        <option value="a_decimal">Otra base a decimal</option>
-                    </select>
+                    <label>Filas (m):</label>
+                    <input class="config__input" type="number" id="input-m" value="3" min="1">
                 </div>
                 <div class="config__group">
-                    <label id="conversion-base-label" for="conversion-base">Base de destino:</label>
-                    <select class="config__input" style="width: auto;" id="conversion-base">
-                        <option value="2">Binario (2)</option>
-                        <option value="8">Octal (8)</option>
-                        <option value="16">Hexadecimal (16)</option>
-                        <option value="10" hidden disabled>Decimal (10)</option>
+                    <label>Variables (n):</label>
+                    <input class="config__input" type="number" id="input-n" value="3" min="1">
+                </div>
+                <div class="config__group">
+                    <label>Método:</label>
+                    <select id="select-method" class="config__input" style="width: auto;">
+                        <option value="gauss">Eliminación de Gauss</option>
+                        <option value="gauss_jordan">Gauss-Jordan</option>
+                        <option value="pivote">Método del Pivote (Dos Fases)</option>
                     </select>
                 </div>
+                <button class="btn btn--primary" id="btn-generate">Generar Campos</button>
             </div>
-            <div class="equation-list">
-                <label for="conversion-number" id="conversion-number-label">Número decimal:</label>
-                <input class="equation-input" type="text" id="conversion-number" maxlength="66"
-                       placeholder="Ej.: 25 o 25.5" autocomplete="off" spellcheck="false"
-                       aria-describedby="conversion-help" required>
-                <small id="conversion-help">Hasta 64 dígitos. Podés usar signo y punto o coma para la parte fraccionaria. No uses separadores de miles ni prefijos como 0b o 0x.</small>
-            </div>
-            <button class="btn btn--success" type="submit" id="conversion-submit">Convertir número</button>
-        </form>
 
-        <div id="conversion-results" class="hidden" aria-live="polite"></div>
+            <div id="equation-container" class="hidden">
+                <!-- CUADRO DE INSTRUCCIONES -->
+                <div style="margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid var(--primary-color); text-align: left; border-radius: 4px;">
+                    <p style="margin: 0; color: #333;"><strong>Instrucciones de formato:</strong></p>
+                    <ul style="margin: 5px 0 0 20px; color: #555; font-size: 0.95rem;">
+                        <li>Escribe tus variables utilizando la letra <strong>x</strong> seguida de su número (ej. <strong>x1, x2, x3</strong>).</li>
+                        <li>Toda ecuación debe contener obligatoriamente el signo de igualdad (<strong>=</strong>).</li>
+                        <li><strong>Ejemplo válido:</strong> <code>2x1 - 3.5x2 + 4x3 = 5</code></li>
+                    </ul>
+                </div>
+
+                <div id="equation-list" class="equation-list"></div>
+                <button class="btn btn--success" id="btn-solve">Resolver Sistema</button>
+            </div>
+
+            <div id="results" class="hidden"></div>
+        </section>
+
+        <!-- Módulo 2: Conversión Numérica -->
+        <section id="modulo-conversion" class="hidden" aria-label="Sistemas numéricos">
+            <div id="conversion-alert" class="alert alert--error hidden" role="alert"></div>
+
+            <form id="conversion-form">
+                <div class="config">
+                    <div class="config__group">
+                        <label for="conversion-mode">Conversión:</label>
+                        <select class="config__input" style="width: auto; max-width: 100%;" id="conversion-mode">
+                            <option value="desde_decimal">Decimal a otra base</option>
+                            <option value="a_decimal">Otra base a decimal</option>
+                        </select>
+                    </div>
+                    <div class="config__group">
+                        <label id="conversion-base-label" for="conversion-base">Base de destino:</label>
+                        <select class="config__input" style="width: auto;" id="conversion-base">
+                            <option value="2">Binario (2)</option>
+                            <option value="8">Octal (8)</option>
+                            <option value="16">Hexadecimal (16)</option>
+                            <option value="10" hidden disabled>Decimal (10)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="equation-list">
+                    <label for="conversion-number" id="conversion-number-label">Número decimal:</label>
+                    <input class="equation-input" type="text" id="conversion-number" maxlength="66"
+                           placeholder="Ej.: 25 o 25.5" autocomplete="off" spellcheck="false"
+                           aria-describedby="conversion-help" required>
+                    <small id="conversion-help">Hasta 64 dígitos. Podés usar signo y punto o coma para la parte fraccionaria. No uses separadores de miles ni prefijos como 0b o 0x.</small>
+                </div>
+                <button class="btn btn--success" type="submit" id="conversion-submit">Convertir número</button>
+            </form>
+
+            <div id="conversion-results" class="hidden" aria-live="polite"></div>
+        </section>
+
+        <!-- NUEVO MÓDULO 3: Vectores (Rn) -->
+        <section id="modulo-vectores" class="hidden" aria-label="Vectores y Combinación Lineal">
+            <h3 style="color: var(--primary-color);">Operaciones Básicas</h3>
+            <div class="config" style="flex-direction: column; align-items: stretch;">
+                <input class="equation-input" id="vec-u" placeholder="Vector u (Ej: 1, -2, 3)">
+                <input class="equation-input" id="vec-v" placeholder="Vector v (Ej: 4, 5, -6)">
+                <input class="equation-input" id="vec-c" type="number" step="any" placeholder="Escalar c (Ej: 3)">
+                
+                <div style="display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap;">
+                    <button class="btn btn--primary" id="btn-vec-suma">Suma (u + v)</button>
+                    <button class="btn btn--primary" id="btn-vec-resta">Resta (u - v)</button>
+                    <button class="btn btn--primary" id="btn-vec-mult">Mult. Escalar (c * u)</button>
+                </div>
+            </div>
+
+            <h3 style="color: var(--primary-color); margin-top: 2rem;">Combinación Lineal</h3>
+            <div class="config" style="flex-direction: column; align-items: stretch;">
+                <textarea class="equation-input" id="vec-conjunto" rows="4" placeholder="Conjunto de vectores v1, v2... vk (Uno por línea, Ej: 1, 2, 3)"></textarea>
+                <input class="equation-input" id="vec-b" style="margin-top: 10px;" placeholder="Vector b a evaluar (Ej: 5, 4, 3)">
+                <button class="btn btn--success" id="btn-vec-comb" style="margin-top: 10px;">Verificar Combinación Lineal</button>
+            </div>
+            
+            <div id="vec-alert" class="alert hidden" role="alert" style="margin-top: 15px;"></div>
+            <div id="vec-results" class="hidden" aria-live="polite" style="margin-top: 20px;"></div>
+        </section>
+
+        <!-- NUEVO MÓDULO 4: Matrices -->
+        <section id="modulo-matrices" class="hidden" aria-label="Operaciones Matriciales">
+            <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 250px;">
+                    <label><b>Matriz A</b> (Filas separadas por Enter)</label>
+                    <textarea class="equation-input" id="mat-a" rows="4" placeholder="1 2 3&#10;4 5 6"></textarea>
+                </div>
+                <div style="flex: 1; min-width: 250px;">
+                    <label><b>Matriz B</b> (Filas separadas por Enter)</label>
+                    <textarea class="equation-input" id="mat-b" rows="4" placeholder="7 8&#10;9 10&#10;11 12"></textarea>
+                </div>
+            </div>
+            
+            <div class="config__group" style="margin-bottom: 15px;">
+                <label>Escalar c:</label>
+                <input class="config__input" type="number" step="any" id="mat-c" placeholder="2">
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn btn--primary" id="btn-mat-suma">Sumar A + B</button>
+                <button class="btn btn--primary" id="btn-mat-mult">Multiplicar A * B</button>
+                <button class="btn btn--primary" id="btn-mat-escalar">Multiplicar c * A</button>
+            </div>
+            
+            <div id="mat-alert" class="alert hidden" role="alert" style="margin-top: 15px;"></div>
+            <div id="mat-results" class="hidden" aria-live="polite" style="margin-top: 20px;"></div>
         </section>
     </div>
 
+    <!-- Carga de Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/conversion.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modulos.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/vectores_matrices.js') }}"></script>
 </body>
 </html>

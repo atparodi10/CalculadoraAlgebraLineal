@@ -93,3 +93,4 @@ def convertir_numero(numero, base_origen, base_destino):
     return {'numero': numero.strip().upper(), 'base_origen': base_origen,
             'base_destino': base_destino, 'resultado': resultado,
             'pasos': pasos, 'aproximado': aproximado, 'periodico': periodico, 'aviso': aviso}
+    
