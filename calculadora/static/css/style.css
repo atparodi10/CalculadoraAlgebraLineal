@@ -1,3 +1,13 @@
+/*
+ * HOJA DE ESTILOS COMPARTIDA
+ * index.html la enlaza mediante url_for('static', filename='css/style.css').
+ * CSS describe cómo se ve cada elemento; no resuelve operaciones ni valida datos.
+ * Los nombres siguen una convención similar a BEM: calculator es un bloque,
+ * calculator__title un elemento y btn--primary una variante. Los nombres no crean
+ * comportamiento por sí mismos: deben coincidir con las clases del HTML/JS.
+ * :root define variables reutilizables; var(--primary-color), por ejemplo, toma
+ * el mismo azul para títulos, bordes y botones. Cambiar una variable afecta sus usos.
+ */
 :root {
     --primary-color: #0056b3;
     --success-color: #28a745;
@@ -6,6 +16,11 @@
     --border-radius: 8px;
 }
 
+/*
+ * body elimina el margen predeterminado y añade 20px de separación del borde.
+ * Flexbox con justify-content:center centra la tarjeta horizontalmente.
+ * No fija altura máxima a toda la página: el documento puede crecer con los pasos.
+ */
 body {
     font-family: Arial, sans-serif;
     background-color: var(--bg-color);
@@ -16,6 +31,12 @@ body {
     justify-content: center;
 }
 
+/*
+ * Tarjeta principal: width:100% aprovecha el espacio y max-width:800px limita
+ * el ancho de contenido. padding añade separación interior; border-radius redondea;
+ * box-shadow da sombra. No hay una regla global box-sizing:border-box: en esta
+ * caja el padding se suma al ancho de contenido, dato relevante al ajustar móviles.
+ */
 .calculator {
     background: white;
     padding: 2rem;
@@ -25,6 +46,10 @@ body {
     max-width: 800px;
 }
 
+/*
+ * El encabezado centra su contenido y lo separa del formulario. El título usa
+ * el color primario y elimina su margen propio; modulos.js cambia solo su texto.
+ */
 .calculator__header {
     text-align: center;
     margin-bottom: 2rem;
@@ -35,6 +60,12 @@ body {
     margin: 0;
 }
 
+/*
+ * config organiza controles en una fila flexible, permite envolverlos con
+ * flex-wrap y mantiene espacios con gap. config__group alinea etiqueta y campo.
+ * Los style inline de algunas secciones cambian la dirección a columna o el ancho;
+ * por eso no toda la disposición está definida únicamente en este archivo.
+ */
 .config {
     display: flex;
     gap: 1rem;
@@ -49,6 +80,10 @@ body {
     gap: 0.5rem;
 }
 
+/*
+ * Ancho base de 60px para controles cortos como m/n. Los select de HTML declaran
+ * width:auto mediante style para que quepan sus etiquetas más largas.
+ */
 .config__input {
     width: 60px;
     padding: 5px;
@@ -56,6 +91,12 @@ body {
     border-radius: 4px;
 }
 
+/*
+ * Estilo común de botones: color de texto, espaciado, cursor y transición.
+ * :hover reduce la opacidad al colocar el puntero. btn--primary usa azul;
+ * btn--success usa verde y ocupa todo el ancho, con separación superior.
+ * La clase success identifica un tipo de botón, no valida que la operación sea correcta.
+ */
 .btn {
     padding: 10px 20px;
     border: none;
@@ -70,8 +111,19 @@ body {
 .btn--primary { background-color: var(--primary-color); }
 .btn--success { background-color: var(--success-color); width: 100%; margin-top: 1rem; }
 
+/*
+ * hidden es el mecanismo que usa JS para ocultar módulos, alertas y resultados.
+ * display:none elimina su espacio visual; NO borra el elemento del DOM ni sus datos.
+ * Un querySelectorAll todavía puede encontrar un elemento con esta clase.
+ */
 .hidden { display: none; }
 
+/*
+ * equation-list dispone entradas en columna y deja espacio entre ellas.
+ * equation-input se comparte entre ecuaciones, conversión, vectores y matrices.
+ * Es una clase VISUAL común; usarla en una búsqueda JS global también recoge
+ * campos ajenos al módulo que está visible.
+ */
 .equation-list {
     display: flex;
     flex-direction: column;
@@ -79,6 +131,10 @@ body {
     margin-bottom: 20px;
 }
 
+/*
+ * width:100% y box-sizing:border-box hacen que padding y borde queden dentro del
+ * ancho del campo, en vez de sumar tamaño y desbordar su contenedor.
+ */
 .equation-input {
     width: 100%;
     box-sizing: border-box;
@@ -89,6 +145,15 @@ body {
     transition: border-color 0.3s;
 }
 
+/*
+ * LÍMITES DEL TAMAÑO DE LOS TEXTAREA
+ * resize:vertical permite arrastrar solo la altura. min-width/max-width al 100%
+ * mantienen el ancho ajustado al padre. La altura puede variar entre 100 y 300px.
+ * overflow:auto permite desplazarse por el contenido cuando no cabe.
+ * No limita la cantidad de números escritos ni el tamaño matemático de una matriz;
+ * es exclusivamente una restricción visual para evitar estirar los campos sin límite.
+ * Aplica a vec-conjunto, mat-a y mat-b porque son textarea con equation-input.
+ */
 textarea.equation-input {
     resize: vertical;
     min-width: 100%;
@@ -98,11 +163,20 @@ textarea.equation-input {
     overflow: auto;
 }
 
+/*
+ * Al recibir foco, el campo cambia el borde al color principal. outline:none
+ * quita el contorno predeterminado; el cambio de borde es la señal visual de foco.
+ */
 .equation-input:focus {
     outline: none;
     border-color: var(--primary-color);
 }
 
+/*
+ * Caja de cada paso calculado. overflow-x:auto crea desplazamiento horizontal
+ * si una matriz es más ancha que la caja, sin forzar que la tarjeta crezca con ella.
+ * Los renderizadores JS crean estos bloques dinámicamente después de la respuesta.
+ */
 .results__step {
     background: #fdfdfd;
     border: 1px solid #eee;
@@ -113,6 +187,11 @@ textarea.equation-input {
     text-align: center;
 }
 
+/*
+ * Clasificación destacada: se usa para el tipo de sistema, el mensaje de combinación
+ * lineal y la equivalencia de conversión. No implica que el resultado sea positivo:
+ * un sistema inconsistente también se presenta en este estilo.
+ */
 .results__classification {
     font-size: 1.2rem;
     font-weight: bold;
@@ -122,6 +201,12 @@ textarea.equation-input {
 }
 
 /* Matrices */
+/*
+ * matrix envuelve la cuadrícula visual. inline-block adapta la caja al contenido;
+ * position:relative sirve como referencia para colocar los corchetes.
+ * ::before y ::after son pseudoelementos decorativos: sus bordes dibujan corchetes
+ * sin imágenes. top/bottom:0 los extiende a la altura de la matriz.
+ */
 .matrix {
     display: inline-block;
     position: relative;
@@ -142,6 +227,12 @@ textarea.equation-input {
 .matrix::before { left: 0; border-right: none; border-radius: 4px 0 0 4px; }
 .matrix::after { right: 0; border-left: none; border-radius: 0 4px 4px 0; }
 
+/*
+ * Cada fila usa flex para colocar celdas horizontalmente. Las celdas tienen ancho
+ * mínimo y fuente monoespaciada. Es una representación con div, no una tabla HTML:
+ * no existe un cálculo automático compartido del ancho de cada columna.
+ * Los números excepcionalmente largos pueden afectar la alineación entre filas.
+ */
 .matrix__row { display: flex; justify-content: center; }
 
 .matrix__cell {
@@ -153,6 +244,12 @@ textarea.equation-input {
     color: var(--text-color);
 }
 
+/*
+ * Variante para la última columna b de una matriz aumentada en main.js.
+ * La línea discontinua distingue coeficientes y términos independientes.
+ * renderMatrizHtml de vectores_matrices.js usa solo matrix__cell, incluso en pasos
+ * de combinación lineal; por tanto esa vista no añade esta separación especial.
+ */
 .matrix__cell--result {
     border-left: 2px dashed #ccc;
     margin-left: 0.5rem;
@@ -161,6 +258,12 @@ textarea.equation-input {
 }
 
 /* Alertas */
+/*
+ * Alertas dentro de la página: alert define la caja; alert--error la pinta roja;
+ * alert--warning amarilla. JS decide cuándo mostrar/ocultar mediante hidden.
+ * La transición de opacity no crea por sí sola un desvanecimiento al alternar
+ * display:none: el temporizador y la visibilidad los gestiona JavaScript.
+ */
 .alert {
     padding: 1rem;
     margin-bottom: 1.5rem;
@@ -182,6 +285,11 @@ textarea.equation-input {
     border: 1px solid #ffeeba;
 }
 
+/*
+ * Adaptación a pantallas de hasta 600px: reduce padding, coloca config en columna
+ * y ensancha botones. No sustituye las demás reglas de ancho mínimo ni impone una
+ * altura máxima al documento; las restricciones de textarea siguen aplicándose.
+ */
 @media (max-width: 600px) {
     .calculator { padding: 1rem; }
     .config { flex-direction: column; align-items: stretch; }

@@ -1,8 +1,22 @@
+# VECTORES Y COMBINACIÓN LINEAL
+# Un vector es una lista ordenada de coordenadas: [1,-2,3] pertenece a R^3.
+# Los botones envían datos a api_vectores; esa ruta llama a estas funciones.
+# Las operaciones básicas retornan (resultado, pasos, error), con error=None si
+# funcionan. Los pasos son diccionarios con mensaje, sin matrices en este caso.
+# La combinación lineal tiene un contrato distinto porque resuelve un sistema.
+# La importación clonar_matriz del archivo original no se utiliza en este módulo;
+# las copias del historial las realiza el motor Gauss-Jordan.
 # Importamos el motor de Gauss-Jordan para resolver el sistema de ecuaciones asociado
 from calculadora.metodos.gauss_jordan import resolver_gauss_jordan
 from calculadora.utilidades.matrices import clonar_matriz
 
 
+# validar_formato_vector(vector, nombre_vector='Vector') -> (es_valido, mensaje).
+# Rechaza una lista vacía, una entrada que no sea lista y componentes no numéricas.
+# Ejemplo: [1,2.5] pasa; [1,'hola'] falla indicando la posición 2. nombre_vector
+# solo personaliza el mensaje: 'Vector u', 'Vector v' o un generador concreto.
+# Límite actual: isinstance(...,(int,float)) también acepta bool en Python y
+# no comprueba que el número sea finito. No equivale a validación numérica estricta.
 def validar_formato_vector(vector, nombre_vector="Vector"):
     """
     Función escudo: Revisa que la entrada sea una lista unidimensional 
@@ -21,6 +35,10 @@ def validar_formato_vector(vector, nombre_vector="Vector"):
     return True, "OK"
 
 
+# suma_vectores(u,v): primero valida ambos formatos y luego exige igual dimensión.
+# No se puede sumar un vector de dos coordenadas con uno de tres en esta operación.
+# Recorre i y calcula u[i]+v[i]; [1,2]+[3,4] produce [4,6].
+# Ante error devuelve (None, [], mensaje), para que la ruta conteste HTTP 400.
 def suma_vectores(u, v):
     """
     Suma componente a componente dos vectores en R^n y genera un registro 
@@ -56,6 +74,10 @@ def suma_vectores(u, v):
     return resultado, pasos, None
 
 
+# resta_vectores(u,v): aplica las mismas condiciones de formato y longitud.
+# Calcula u[i]-v[i] respetando el orden; [1,2]-[3,4] produce [-2,-2].
+# Los paréntesis en los mensajes ayudan a distinguir restar una coordenada negativa.
+# Devuelve resultado, explicaciones por componente y None, o el contrato de error.
 def resta_vectores(u, v):
     """
     Resta componente a componente dos vectores en R^n paso a paso.
@@ -83,6 +105,10 @@ def resta_vectores(u, v):
     return resultado, pasos, None
 
 
+# mult_escalar_vector(c,v): c es un solo número que multiplica todas las posiciones.
+# Ejemplo: c=3, v=[1,-2] -> [3,-6]. No necesita un segundo vector ni comparar largos.
+# Aunque el parámetro se llame v aquí, api_vectores pasa el campo u del formulario.
+# Si el escalar o el vector es inválido, se detiene antes del ciclo.
 def mult_escalar_vector(c, v):
     """
     Multiplica un escalar 'c' por cada una de las componentes de un vector 'v'.
@@ -108,6 +134,16 @@ def mult_escalar_vector(c, v):
     return resultado, pasos, None
 
 
+# verificar_combinacion_lineal(vectores_v, vector_b) busca coeficientes c1..cn
+# que satisfagan c1*v1 + c2*v2 + ... + cn*vn = b. Ser combinación significa que
+# existe al menos una elección de coeficientes; no hace falta que sea única.
+# Entrada de ejemplo: vectores_v=[[1,0],[0,1]], vector_b=[3,4]. Los coeficientes
+# son 3 y 4, por lo que la respuesta es afirmativa.
+# Salida: (es_combinacion, mensaje, pasos_matriz, pasos_ecuaciones, soluciones).
+# es_combinacion es True/False para un cálculo válido, y None para entrada inválida.
+# Límite actual: valida cada vector, pero no valida explícitamente que vectores_v
+# sea una lista no vacía antes de usar len y recorrerla. El frontend sí bloquea
+# un conjunto vacío en el uso normal; la API por sí sola no cubre todos esos casos.
 def verificar_combinacion_lineal(vectores_v, vector_b):
     """
     Transforma un conjunto de vectores y un vector b en una matriz aumentada 
@@ -130,6 +166,11 @@ def verificar_combinacion_lineal(vectores_v, vector_b):
         if len(v) != m:
             return None, f"Error: El Vector v{indice+1} tiene dimensión {len(v)}, pero se esperaba dimensión {m}.", [], [], []
             
+    # En el textarea se escribe un vector por línea, pero en la matriz A cada vector
+    # debe ocupar una COLUMNA: los coeficientes desconocidos multiplican vectores.
+    # Ejemplo: [[1,2],[3,4]] se transforma en A=[[1,3],[2,4]].
+    # Hay m ecuaciones (coordenadas de b) y n incógnitas (número de generadores).
+    # No confundir estas incógnitas con las coordenadas originales de cada vector.
     # Construcción de la matriz A (transponiendo los vectores para colocarlos como columnas)
     A = []
     for i in range(m): # Ciclo exterior para las filas
@@ -142,6 +183,10 @@ def verificar_combinacion_lineal(vectores_v, vector_b):
     M, pasos_matriz, tipo_sistema, soluciones, pasos_ecuaciones = resolver_gauss_jordan(A, vector_b, m, n)
     
     # Análisis lógico del resultado: si no hay inconsistencias, SÍ es combinación lineal
+    # La decisión depende de que el texto tipo_sistema contenga 'Inconsistente'.
+    # Por eso cambiar ese texto en el resolutor también puede afectar esta función.
+    # Tanto una solución única como infinitas soluciones producen True. La ruta
+    # no incluye soluciones como campo separado, pero conserva el desarrollo algebraico.
     es_combinacion = "Inconsistente" not in tipo_sistema
     
     if es_combinacion:

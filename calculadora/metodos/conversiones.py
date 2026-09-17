@@ -1,3 +1,12 @@
+# CONVERSIÓN DE BASES CON DESARROLLO PASO A PASO
+# Flujo: validar texto -> obtener fracción exacta -> convertir parte entera y
+# fraccionaria -> ensamblar signo, resultado y explicaciones.
+# Se admiten bases 2,8,10,16, pero al menos una de las dos debe ser 10. Por ejemplo,
+# 10->2 y 16->10 sí; 2->16 directamente no. También se admite 10->10.
+# MAX_DECIMALES limita la cantidad de dígitos FRACCIONARIOS de salida a 32;
+# no limita la parte entera ni equivale al máximo de 64 dígitos de entrada.
+# Los cálculos se hacen con enteros; no se usan int(texto,base), bin, oct ni hex
+# para resolver automáticamente la conversión.
 from ..utilidades.numeros import (
     DIGITOS, validar_numero, obtener_valor, combinacion_lineal,
 )
@@ -5,6 +14,12 @@ from ..utilidades.numeros import (
 MAX_DECIMALES = 32
 
 
+# convertir_entero(numero,base) -> (texto_convertido,lista_de_pasos).
+# Espera magnitud entera no negativa y base válida; convertir_numero prepara eso.
+# Divide sucesivamente por la base. // calcula el cociente entero y % el residuo.
+# Los residuos se obtienen del dígito menos significativo al más significativo,
+# por eso reversed los lee al revés. Ejemplo: 13->base 2 deja residuos 1,0,1,1;
+# al invertirlos se obtiene '1101'. Si numero=0 retorna '0' y un paso explicativo.
 def convertir_entero(numero, base):
     """Aplica N = base * cociente + residuo y lee residuos en orden inverso."""
     if numero == 0:
@@ -22,11 +37,25 @@ def convertir_entero(numero, base):
     return ''.join(reversed(digitos)), pasos
 
 
+# convertir_fraccion(resto,denominador,base) devuelve cuatro valores:
+# (texto_fraccionario,pasos,aproximado,periodico). Se espera 0<=resto<denominador.
+# Multiplica resto/denominador por la base. La parte entera es el próximo dígito;
+# el nuevo resto permite continuar. Se conservan enteros para detectar repeticiones
+# exactas, sin confundirlas con errores de coma flotante.
+# Ejemplo: 1/2 en base 2 produce '1'; 1/10 en base 2 produce '0(0011)'.
 def convertir_fraccion(resto, denominador, base):
     """Multiplica la fracción por la base; cada parte entera es el siguiente dígito."""
     digitos = []
     restos = []
     pasos = []
+    # Tres formas de terminar:
+    # 1. resto=0: expansión finita y exacta; ambas banderas son False.
+    # 2. Se repite un resto: desde su primera posición empieza un período, que se
+    #    encierra entre paréntesis; periodico=True y aproximado=False.
+    # 3. Se alcanzan 32 dígitos sin terminar ni detectar período: aproximado=True;
+    #    la salida se TRUNCA, no se redondea. convertir_numero añadirá '…'.
+    # Se comprueba repetición antes del límite, por lo que un período que se detecta
+    # justo en ese punto todavía se representa como exacto.
     while resto:
         # Un resto repetido inicia un período; no se pierde precisión usando enteros.
         if resto in restos:
@@ -46,6 +75,13 @@ def convertir_fraccion(resto, denominador, base):
     return ''.join(digitos), pasos, False, False
 
 
+# convertir_numero(numero,base_origen,base_destino) es la función pública del módulo.
+# Valida ambas bases y el formato; devuelve un diccionario listo para jsonify.
+# Ejemplo: ('25.5',10,2) -> resultado '11001.1', aproximado=False, periodico=False.
+# Los campos numero/base_origen/base_destino permiten a JS mostrar la equivalencia;
+# pasos es una lista de {titulo,lineas}; aviso explica períodos o truncamiento.
+# Aquí pasos NO tiene la estructura {mensaje,matriz} de los sistemas: conversion.js
+# usa un renderizador propio, mostrarResultado, para este contrato.
 def convertir_numero(numero, base_origen, base_destino):
     """Convierte pasando por el valor posicional exacto, sin conversiones de base integradas."""
     signo, entera, fraccionaria = validar_numero(numero, base_origen)
@@ -53,6 +89,9 @@ def convertir_numero(numero, base_origen, base_destino):
         raise ValueError('Seleccioná una base de destino válida: 2, 8, 10 o 16.')
     if base_origen != 10 and base_destino != 10:
         raise ValueError('Seleccioná una conversión desde decimal o hacia decimal.')
+    # Divide la fracción exacta en entero y resto. Ambos se convierten por separado
+    # a la base de destino. El desarrollo posicional describe la entrada, mientras
+    # que divisiones y multiplicaciones describen cómo construir la salida.
     numerador, denominador = obtener_valor(entera, fraccionaria, base_origen)
     expresion, evaluacion = combinacion_lineal(entera, fraccionaria, base_origen, signo)
     entero = numerador // denominador
@@ -61,6 +100,9 @@ def convertir_numero(numero, base_origen, base_destino):
     resultado_fraccion, multiplicaciones, aproximado, periodico = convertir_fraccion(
         resto, denominador, base_destino,
     )
+    # Ensambla texto: parte entera, punto si hay fracción y signo si la magnitud no
+    # es cero. Así evita mostrar '-0'. Los paréntesis del período ya vienen de la
+    # función anterior; los puntos suspensivos solo se agregan si hubo truncamiento.
     resultado = resultado_entero
     if resultado_fraccion:
         resultado += '.' + resultado_fraccion
@@ -69,6 +111,11 @@ def convertir_numero(numero, base_origen, base_destino):
     if aproximado:
         resultado += '…'
 
+    # Prepara la explicación visual. Hacia decimal basta el desarrollo posicional;
+    # hacia otras bases añade divisiones enteras y, si existen, multiplicaciones
+    # fraccionarias. A..F se explican cuando el origen es hexadecimal.
+    # numero en la respuesta conserva el texto sin espacios de extremos y en
+    # mayúsculas; el resultado usa punto, aunque la entrada haya usado coma.
     pasos = [
         {'titulo': 'Combinación lineal del número de entrada',
          'lineas': [expresion, '= ' + evaluacion]},

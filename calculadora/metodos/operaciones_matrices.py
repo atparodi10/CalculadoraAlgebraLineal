@@ -1,8 +1,23 @@
+# OPERACIONES MATRICIALES
+# Representación: [[1,2,3],[4,5,6]] tiene 2 filas y 3 columnas, es decir, orden 2x3.
+# Las tres operaciones devuelven (resultado, pasos, pasos_ecuaciones, error).
+# resultado es la matriz numérica; pasos contiene matrices iniciales/finales;
+# pasos_ecuaciones explica cada celda. error=None indica éxito.
+# No se guarda una matriz intermedia por cada celda: el detalle por celda es texto.
+# Si falla una validación se retorna (None, [], [], mensaje).
 def validar_formato_matriz(matriz, nombre_matriz="Matriz"):
     """
     Función escudo: Verifica que la entrada sea una lista bidimensional, perfectamente 
     rectangular (filas con igual número de columnas) y puramente numérica.
     """
+    # validar_formato_matriz(matriz, nombre_matriz='Matriz') -> (bool, mensaje).
+    # Comprueba entrada no vacía, lista exterior, primera fila como lista, filas de
+    # igual longitud y elementos int/float. La rectangularidad evita accesos a una
+    # columna que no existe; el tipo numérico permite sumar y multiplicar celdas.
+    # Límites actuales: solo verifica el tipo lista de la PRIMERA fila; una fila
+    # posterior no iterable puede lanzar excepción. Acepta [[]] (cero columnas),
+    # booleanos y floats no finitos. Los comentarios originales de 'estrictamente'
+    # no significan que estos casos queden cubiertos.
     # 1. Validación estructural de que sea una lista de listas (bidimensional)
     if not matriz or not isinstance(matriz, list) or not isinstance(matriz[0], list):
         return False, f"Error: {nombre_matriz} no tiene un formato bidimensional válido."
@@ -25,6 +40,10 @@ def validar_formato_matriz(matriz, nombre_matriz="Matriz"):
     return True, "OK"
 
 
+# suma_matrices(A,B): requiere el mismo número de filas y columnas en ambas.
+# Suma posiciones equivalentes: C[i][j]=A[i][j]+B[i][j].
+# Ejemplo: [[1,2]] + [[3,4]] -> [[4,6]]. Su costo de cálculo crece con filas*columnas.
+# Valida antes de construir resultados para evitar una suma parcial incompatible.
 def suma_matrices(A, B):
     """
     Suma dos matrices A y B celda por celda, generando el registro de evolución 
@@ -47,6 +66,9 @@ def suma_matrices(A, B):
         return None, [], [], f"Error: No se pueden sumar. Matriz A es {filas_A}x{cols_A} y Matriz B es {filas_B}x{cols_B}."
         
     # Inicialización de estructuras para el resultado y el registro de pasos visuales
+    # Las matrices iniciales se copian fila por fila para describir las entradas.
+    # fila_nueva se crea en cada iteración exterior: cada fila del resultado debe ser
+    # una lista distinta. Reutilizar una sola lista alteraría las filas anteriores.
     resultado = []
     pasos = [
         {"mensaje": "Matriz A inicial:", "matriz": [fila[:] for fila in A]},
@@ -74,6 +96,10 @@ def suma_matrices(A, B):
     return resultado, pasos, pasos_ecuaciones, None
 
 
+# mult_escalar_matriz(c,A): valida A y que c sea int/float; multiplica cada celda
+# por el mismo escalar, conservando el orden de la matriz. c=2 y A=[[1,-3]] produce
+# [[2,-6]]. No requiere B y no realiza el producto fila por columna.
+# Retorna la matriz, los pasos visuales, el detalle por celda y el indicador de error.
 def mult_escalar_matriz(c, A):
     """
     Multiplica un escalar 'c' por cada celda de la matriz, registrando 
@@ -103,6 +129,11 @@ def mult_escalar_matriz(c, A):
     return resultado, pasos, pasos_ecuaciones, None
 
 
+# multiplicacion_matrices(A,B): implementa A*B y el orden importa.
+# Si A es de p x q y B es de q x r, C será de p x r. Solo deben coincidir las
+# columnas de A con las filas de B; no se exige que ambas matrices sean cuadradas.
+# Ejemplo: [[1,2,3]] * [[4],[5],[6]] -> [[32]], porque 1*4+2*5+3*6=32.
+# El costo de cálculo es proporcional a p*q*r.
 def multiplicacion_matrices(A, B):
     """
     Ejecuta el producto matricial calculando el producto punto (fila por columna) 
@@ -128,6 +159,10 @@ def multiplicacion_matrices(A, B):
     ]
     pasos_ecuaciones = ["Ecuaciones de Producto Punto (Fila de A · Columna de B):"]
     
+    # Papel de los tres índices: i elige la fila de A; j la columna de B; k recorre
+    # sus elementos correspondientes. Cada C[i][j] acumula A[i][k]*B[k][j].
+    # suma_producto se reinicia para cada celda, detalles_operacion reúne solo los
+    # textos de esa celda y fila_nueva se reinicia para cada fila del resultado.
     # 1er Ciclo: Fija la fila 'i' de la matriz A
     for i in range(filas_A):
         fila_nueva = []
@@ -151,5 +186,8 @@ def multiplicacion_matrices(A, B):
             
         resultado.append(fila_nueva)
         
+    # resultado se añade al último paso cuando ya está completo. A partir de aquí
+    # no se modifica, por eso esa referencia se puede usar como matriz final.
+    # La ruta api_matrices convierte estas listas y diccionarios a JSON.
     pasos.append({"mensaje": "Matriz resultante del producto (A * B):", "matriz": resultado})
     return resultado, pasos, pasos_ecuaciones, None

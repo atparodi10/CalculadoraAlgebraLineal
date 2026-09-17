@@ -1,0 +1,6 @@
+# DEPENDENCIAS DEL PROYECTO
+# El archivo recibido estaba vacío. La dependencia externa usada por el código
+# es Flask; re y las demás herramientas básicas pertenecen a Python.
+# Estos comentarios no instalan paquetes ni fijan versiones. Para ejecutar la
+# aplicación, instalar Flask manualmente como se indica en app.py.
+# Se conserva el nombre original requeriments.txt.

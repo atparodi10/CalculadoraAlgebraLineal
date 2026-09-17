@@ -1,17 +1,54 @@
+<!--
+PÁGINA ÚNICA DE LA APLICACIÓN
+Flask entrega esta plantilla desde rutas.py:index(). HTML define la estructura;
+CSS la apariencia; JavaScript los eventos y las peticiones. Los algoritmos están
+en Python. Todos los módulos están presentes en el DOM desde el principio;
+modulos.js decide cuál se ve añadiendo o quitando la clase hidden.
+
+Mapa de conexiones para recorrer el proyecto:
+Sistemas: main.js -> POST /calcular -> rutas.py -> gauss/gauss_jordan/pivote.
+Bases: conversion.js -> POST /convertir -> rutas_conversion.py -> conversiones.
+Vectores: vectores_matrices.js -> POST /api/vectores -> rutas.py -> vectores.
+Matrices: vectores_matrices.js -> POST /api/matrices -> rutas.py -> operaciones_matrices.
+Los resultados de estas peticiones son JSON: JS construye su presentación.
+
+Un id identifica un elemento concreto para getElementById. Una class puede
+repetirse para compartir estilo o seleccionar un conjunto. Si se renombra un id,
+hay que actualizar las referencias JS. Los atributos aria ayudan a tecnologías
+de asistencia; no sustituyen validaciones ni provocan cálculos.
+-->
 <!DOCTYPE html>
+<!--
+lang='es' indica el idioma. UTF-8 permite tildes y símbolos; viewport ajusta
+la referencia de tamaño a la pantalla, necesaria para los estilos móviles.
+-->
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Álgebra Lineal</title>
+    <!--
+    Las dobles llaves pertenecen a Jinja, el motor de plantillas usado por Flask.
+    url_for genera la URL de static/css/style.css en el servidor. Esto se resuelve
+    ANTES de que el navegador reciba HTML; no es una instrucción JavaScript.
+    -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
+    <!--
+    calculator es la tarjeta principal centrada y limitada por style.css.
+    calculator__title es el h1 que modulos.js actualiza al cambiar de herramienta.
+    -->
     <div class="calculator">
         <div class="calculator__header">
             <h1 class="calculator__title">Calculadora de Sistemas de Ecuaciones</h1>
         </div>
 
+        <!--
+        Selector de módulos: el texto de cada option es visible; value es la clave que
+        compara mostrarModulo() en modulos.js. aria-controls enumera las secciones que
+        controla el selector, pero el comportamiento lo implementa el evento change.
+        -->
         <div class="config">
             <div class="config__group">
                 <label for="modulo-activo">Función:</label>
@@ -25,6 +62,14 @@
         </div>
 
         <!-- Módulo 1: Sistemas de Ecuaciones -->
+        <!--
+        SISTEMAS. Es la sección visible por defecto. ui-alert recibe los mensajes de
+        main.js. input-m define cuántas ecuaciones introducir; input-n cuántas variables.
+        value=3 es el valor inicial y min=1 expresa el mínimo del control numérico.
+        No se declara máximo HTML: el JS aplica una heurística basada en m*n.
+        Los controles no están dentro de un formulario de envío; sus botones tienen
+        eventos click y la validación principal depende de esos manejadores.
+        -->
         <section id="modulo-ecuaciones" aria-label="Sistemas de ecuaciones">
             <div id="ui-alert" class="alert hidden"></div>
             
@@ -39,6 +84,11 @@
                 </div>
                 <div class="config__group">
                     <label>Método:</label>
+                    <!--
+                    Los values del método deben coincidir con la selección en rutas.py:calcular.
+                    Las etiquetas visibles pueden ser descriptivas, pero gauss/gauss_jordan/pivote
+                    son las claves transmitidas al servidor.
+                    -->
                     <select id="select-method" class="config__input" style="width: auto;">
                         <option value="gauss">Eliminación de Gauss</option>
                         <option value="gauss_jordan">Gauss-Jordan</option>
@@ -48,6 +98,12 @@
                 <button class="btn btn--primary" id="btn-generate">Generar Campos</button>
             </div>
 
+            <!--
+            Generar Campos crea inputs dentro de equation-list, muestra este contenedor y
+            oculta los resultados previos. Este bloque de instrucciones solo informa; no
+            valida. Las reglas reales están en JS y en utilidades/ecuaciones.py.
+            El formato previsto usa x1..xn, punto decimal y un número a la derecha del '='.
+            -->
             <div id="equation-container" class="hidden">
                 <!-- CUADRO DE INSTRUCCIONES -->
                 <div style="margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid var(--primary-color); text-align: left; border-radius: 4px;">
@@ -59,6 +115,11 @@
                     </ul>
                 </div>
 
+                <!--
+                Contenedor inicialmente vacío: main.js crea un input por fila con createElement.
+                Resolver Sistema envía los textos y las dimensiones mediante fetch. results
+                recibe matrices, clasificación, desarrollo y comprobaciones construidos por JS.
+                -->
                 <div id="equation-list" class="equation-list"></div>
                 <button class="btn btn--success" id="btn-solve">Resolver Sistema</button>
             </div>
@@ -67,6 +128,11 @@
         </section>
 
         <!-- Módulo 2: Conversión Numérica -->
+        <!--
+        CONVERSIÓN. hidden la oculta inicialmente. role=alert anuncia mensajes de error.
+        Este módulo sí usa un form: el botón submit y la tecla Enter pueden activar el
+        envío; conversion.js llama preventDefault para evitar recargar la página.
+        -->
         <section id="modulo-conversion" class="hidden" aria-label="Sistemas numéricos">
             <div id="conversion-alert" class="alert alert--error hidden" role="alert"></div>
 
@@ -74,6 +140,11 @@
                 <div class="config">
                     <div class="config__group">
                         <label for="conversion-mode">Conversión:</label>
+                        <!--
+                        conversion-mode fija el sentido. Desde decimal mantiene origen=10; hacia
+                        decimal mantiene destino=10. conversion-base selecciona la otra base. La opción
+                        10 empieza deshabilitada y JS la habilita al elegir el sentido hacia decimal.
+                        -->
                         <select class="config__input" style="width: auto; max-width: 100%;" id="conversion-mode">
                             <option value="desde_decimal">Decimal a otra base</option>
                             <option value="a_decimal">Otra base a decimal</option>
@@ -91,6 +162,14 @@
                 </div>
                 <div class="equation-list">
                     <label for="conversion-number" id="conversion-number-label">Número decimal:</label>
+                    <!--
+                    type=text es intencional: los dígitos hexadecimales A..F no caben en type=number.
+                    maxlength=66 permite hasta 64 dígitos más signo y separador; Python vuelve a
+                    validar el límite de dígitos y las bases. required bloquea un envío vacío.
+                    autocomplete=off evita sugerencias de autocompletado; spellcheck=false desactiva
+                    corrección ortográfica. aria-describedby relaciona la entrada con su ayuda.
+                    La ayuda no se ejecuta: las comprobaciones están en validar_numero.
+                    -->
                     <input class="equation-input" type="text" id="conversion-number" maxlength="66"
                            placeholder="Ej.: 25 o 25.5" autocomplete="off" spellcheck="false"
                            aria-describedby="conversion-help" required>
@@ -99,10 +178,20 @@
                 <button class="btn btn--success" type="submit" id="conversion-submit">Convertir número</button>
             </form>
 
+            <!--
+            aria-live=polite permite anunciar cambios del resultado sin interrumpir de
+            forma urgente al lector de pantalla. mostrarResultado crea aquí nodos de texto.
+            -->
             <div id="conversion-results" class="hidden" aria-live="polite"></div>
         </section>
 
         <!-- NUEVO MÓDULO 3: Vectores (Rn) -->
+        <!--
+        VECTORES. vectores_matrices.js conecta estos ids con siete eventos compartidos
+        entre vectores y matrices. Para sumar/restar se usan u y v; para escalar, u y c.
+        placeholder es una pista que desaparece al escribir, no un dato predeterminado.
+        step=any admite un escalar con decimales en el control numérico.
+        -->
         <section id="modulo-vectores" class="hidden" aria-label="Vectores y Combinación Lineal">
             <h3 style="color: var(--primary-color);">Operaciones Básicas</h3>
             <div class="config" style="flex-direction: column; align-items: stretch;">
@@ -117,6 +206,13 @@
                 </div>
             </div>
 
+            <!--
+            COMBINACIÓN LINEAL. Cada línea del textarea representa un vector generador.
+            vec-b es el vector que se desea obtener. Python colocará los generadores como
+            columnas de A y buscará sus coeficientes mediante Gauss-Jordan.
+            rows=4 sugiere altura inicial; los límites de redimensionamiento los fija CSS.
+            vec-alert y vec-results se comparten con las operaciones básicas del módulo.
+            -->
             <h3 style="color: var(--primary-color); margin-top: 2rem;">Combinación Lineal</h3>
             <div class="config" style="flex-direction: column; align-items: stretch;">
                 <textarea class="equation-input" id="vec-conjunto" rows="4" placeholder="Conjunto de vectores v1, v2... vk (Uno por línea, Ej: 1, 2, 3)"></textarea>
@@ -129,10 +225,22 @@
         </section>
 
         <!-- NUEVO MÓDULO 4: Matrices -->
+        <!--
+        MATRICES. Cada línea de mat-a/mat-b es una fila; espacios o comas separan columnas.
+        La suma necesita dimensiones iguales; el producto exige columnas(A)=filas(B).
+        Estas condiciones se comprueban en operaciones_matrices.py. Escalar usa solo A y c.
+        Los bloques flex:1 reparten el espacio; min-width:250px y flex-wrap permiten
+        que una matriz pase debajo de la otra cuando no caben juntas.
+        -->
         <section id="modulo-matrices" class="hidden" aria-label="Operaciones Matriciales">
             <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
                 <div style="flex: 1; min-width: 250px;">
                     <label><b>Matriz A</b> (Filas separadas por Enter)</label>
+                    <!--
+                    La entidad HTML &#10; introduce un salto de línea dentro del placeholder.
+                    No es un elemento de la matriz: los valores se leen del contenido escrito por
+                    el usuario y parseMatrix los transforma en listas.
+                    -->
                     <textarea class="equation-input" id="mat-a" rows="4" placeholder="1 2 3&#10;4 5 6"></textarea>
                 </div>
                 <div style="flex: 1; min-width: 250px;">
@@ -152,11 +260,25 @@
                 <button class="btn btn--primary" id="btn-mat-escalar">Multiplicar c * A</button>
             </div>
             
+            <!--
+            Alerta y resultado independientes de los otros módulos: fetchOperacion recibe
+            estos ids para saber dónde colocar el error, las matrices y el desglose.
+            -->
             <div id="mat-alert" class="alert hidden" role="alert" style="margin-top: 15px;"></div>
             <div id="mat-results" class="hidden" aria-live="polite" style="margin-top: 20px;"></div>
         </section>
     </div>
 
+    <!--
+    CARGA DE JAVASCRIPT Y ORDEN DE INICIALIZACIÓN
+    Cada script src solicita un archivo estático generado por url_for. No se usan
+    módulos ES, import/export ni un empaquetador. Cada archivo espera DOMContentLoaded
+    y prepara su propio ámbito, por lo que no depende de llamar funciones globales
+    de los otros archivos. main: sistemas; conversion: bases; modulos: navegación;
+    vectores_matrices: las dos últimas herramientas.
+    Abrir este HTML directamente como archivo local deja sin resolver Jinja y sin
+    backend las rutas fetch. Debe abrirse a través del servidor Flask.
+    -->
     <!-- Carga de Scripts -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/conversion.js') }}"></script>
