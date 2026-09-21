@@ -1,146 +1,201 @@
 /*
- * HOJA DE ESTILOS COMPARTIDA
- * index.html la enlaza mediante url_for('static', filename='css/style.css').
- * CSS describe cómo se ve cada elemento; no resuelve operaciones ni valida datos.
- * Los nombres siguen una convención similar a BEM: calculator es un bloque,
- * calculator__title un elemento y btn--primary una variante. Los nombres no crean
- * comportamiento por sí mismos: deben coincidir con las clases del HTML/JS.
- * :root define variables reutilizables; var(--primary-color), por ejemplo, toma
- * el mismo azul para títulos, bordes y botones. Cambiar una variable afecta sus usos.
+ * HOJA DE ESTILOS PREMIUM (UI/UX AVANZADO)
+ * Diseño de nivel corporativo/académico superior. Incluye animaciones de entrada,
+ * tipografía optimizada, scrollbars personalizados y paletas índigo/pizarra.
  */
-:root {
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap');
 
 :root {
-    --primary-color: #2563eb; /* Azul rey moderno */
-    --primary-hover: #1d4ed8;
-    --success-color: #10b981; /* Verde esmeralda */
+    /* Paleta de colores Premium */
+    --primary-color: #4f46e5; /* Indigo vibrante */
+    --primary-hover: #4338ca;
+    --primary-light: #e0e7ff;
+    --secondary-color: #0ea5e9; /* Cyan para detalles */
+    --success-color: #10b981; 
     --success-hover: #059669;
-    --bg-color: #f3f4f6; /* Gris perla */
+    --danger-color: #ef4444;
+    
+    /* Fondos y superficies */
+    --bg-gradient: linear-gradient(135deg, #f0f4f8 0%, #e2e8f0 100%);
     --surface-color: #ffffff;
-    --text-main: #1f2937;
-    --text-muted: #6b7280;
-    --border-color: #e5e7eb;
-    --border-radius: 12px; /* Curvas más amigables */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --surface-alt: #f8fafc;
+    
+    /* Textos (Slate palette) */
+    --text-main: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #cbd5e1;
+    
+    /* Variables estructurales */
+    --border-radius: 16px;
+    --radius-sm: 8px;
+    --shadow-soft: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    --shadow-float: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.02);
 }
 
+/* =========================================
+   SCROLLBAR PERSONALIZADA (ESTILO MAC/MODERNO)
+   ========================================= */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* =========================================
+   ESTILOS BASE
+   ========================================= */
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: var(--bg-color);
+    background: var(--bg-gradient);
     color: var(--text-main);
     margin: 0;
-    padding: 2rem 1rem;
+    padding: 3rem 1rem;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
-    line-height: 1.5;
+    align-items: flex-start;
+    line-height: 1.6;
 }
 
-/* Tarjeta principal flotante */
+/* Tarjeta Principal */
 .calculator {
     background: var(--surface-color);
-    padding: 2.5rem;
-    border-radius: 16px;
-    box-shadow: var(--shadow-lg);
+    padding: 3rem;
+    border-radius: 24px;
+    box-shadow: var(--shadow-float);
     width: 100%;
-    max-width: 850px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 900px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Adorno superior en la tarjeta */
+.calculator::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
 }
 
 .calculator__header {
     text-align: center;
-    margin-bottom: 2.5rem;
+    margin-bottom: 3rem;
 }
 
 .calculator__title {
-    color: var(--text-main);
-    font-size: 2rem;
-    font-weight: 700;
+    font-size: 2.2rem;
+    font-weight: 800;
     margin: 0;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.03em;
+    /* Efecto de texto con gradiente */
+    background: linear-gradient(135deg, #1e293b, var(--primary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-/* Controles y configuración */
+/* =========================================
+   PANELES DE CONFIGURACIÓN Y CONTROLES
+   ========================================= */
 .config {
     display: flex;
-    gap: 1.25rem;
+    gap: 1.5rem;
     justify-content: center;
     flex-wrap: wrap;
     margin-bottom: 2rem;
-    background: #f9fafb;
-    padding: 1.5rem;
+    background: var(--surface-alt);
+    padding: 1.5rem 2rem;
     border-radius: var(--border-radius);
-    border: 1px solid var(--border-color);
+    border: 1px solid #e2e8f0;
+    box-shadow: var(--shadow-inner);
 }
 
 .config__group {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-muted);
+    font-size: 0.95rem;
 }
 
-/* Inputs y Selects unificados */
+/* Inputs, Selects y Textareas */
 .config__input, .equation-input {
     width: 100%;
     box-sizing: border-box;
-    padding: 0.75rem 1rem;
+    padding: 0.85rem 1.2rem;
     font-size: 1rem;
     font-family: 'Inter', sans-serif;
-    border: 2px solid var(--border-color);
-    border-radius: var(--border-radius);
-    background-color: var(--surface-color);
+    font-weight: 500;
     color: var(--text-main);
-    transition: all 0.2s ease-in-out;
-    box-shadow: var(--shadow-sm);
+    background-color: var(--surface-color);
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    transition: all 0.25s ease;
+    box-shadow: var(--shadow-soft);
 }
 
 .config__input {
-    width: 80px;
-    padding: 0.5rem 0.75rem;
+    width: auto;
+    min-width: 80px;
+    padding: 0.6rem 1rem;
 }
 
 .config__input:focus, .equation-input:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2); /* Efecto de anillo o "ring" */
+    box-shadow: 0 0 0 4px var(--primary-light);
+    transform: translateY(-1px);
 }
 
-/* Textareas */
 textarea.equation-input {
     resize: vertical;
-    min-width: 100%;
-    max-width: 100%;
     min-height: 120px;
-    max-height: 350px;
-    overflow: auto;
-    font-family: 'Fira Code', monospace; /* Tipografía para datos crudos */
+    max-height: 400px;
+    font-family: 'Fira Code', monospace;
     font-size: 0.95rem;
-    line-height: 1.6;
+    line-height: 1.7;
+    background-color: #f8fafc;
 }
 
-/* Botones con efectos de elevación */
+/* =========================================
+   BOTONES ELEGANTES
+   ========================================= */
 .btn {
-    padding: 0.75rem 1.5rem;
+    padding: 0.85rem 1.75rem;
     border: none;
-    border-radius: var(--border-radius);
+    border-radius: var(--radius-sm);
     cursor: pointer;
     font-weight: 600;
     font-family: 'Inter', sans-serif;
-    letter-spacing: 0.025em;
+    font-size: 1rem;
+    letter-spacing: 0.03em;
     color: white;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: var(--shadow-sm);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
+    position: relative;
+    overflow: hidden;
 }
 
 .btn:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
 }
 
 .btn:active {
@@ -150,60 +205,68 @@ textarea.equation-input {
 .btn--primary { 
     background-color: var(--primary-color); 
 }
-.btn--primary:hover { 
-    background-color: var(--primary-hover); 
-}
 
 .btn--success { 
     background-color: var(--success-color); 
+    box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
     width: 100%; 
-    margin-top: 1.5rem; 
+    margin-top: 1rem; 
     font-size: 1.1rem;
-    padding: 1rem;
-}
-.btn--success:hover { 
-    background-color: var(--success-hover); 
+    padding: 1.2rem;
+    border-radius: 12px;
 }
 
-/* Listas y contenedores */
-.equation-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+.btn--success:hover { 
+    background-color: var(--success-hover); 
+    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3);
+}
+
+/* =========================================
+   ANIMACIONES Y CAJAS DE RESULTADOS
+   ========================================= */
+@keyframes fadeSlideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .hidden { display: none !important; }
 
-/* Cajas de Pasos y Resultados */
+/* El contenedor del paso a paso */
 .results__step {
     background: var(--surface-color);
-    border: 1px solid var(--border-color);
-    padding: 1.5rem;
-    margin-bottom: 1.25rem;
+    border: 1px solid #e2e8f0;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
     border-radius: var(--border-radius);
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow-soft);
     overflow-x: auto;
     text-align: center;
-    transition: transform 0.2s;
-}
-
-.results__step:hover {
-    border-color: #d1d5db;
+    animation: fadeSlideUp 0.5s ease-out forwards;
+    border-left: 5px solid var(--primary-color); /* Acento visual izquierdo */
 }
 
 .results__classification {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: var(--primary-color);
     text-align: center;
     margin: 2rem 0;
-    padding: 1rem;
-    background: rgba(37, 99, 235, 0.05);
+    padding: 1.25rem;
+    background: var(--primary-light);
     border-radius: var(--border-radius);
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    animation: fadeSlideUp 0.4s ease-out forwards;
 }
 
-/* Diseño de Matrices Matemáticas */
+/* =========================================
+   MATRICES Y ÁLGEBRA
+   ========================================= */
 .matrix {
     display: inline-block;
     position: relative;
@@ -211,24 +274,26 @@ textarea.equation-input {
     padding: 0.5rem 1.5rem;
 }
 
-/* Corchetes elegantes */
+/* Corchetes estilo libro de texto de ingeniería */
 .matrix::before,
 .matrix::after {
     content: "";
     position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 10px;
-    border: 3px solid var(--text-main); /* Corchetes negros limpios */
+    top: -5px;
+    bottom: -5px;
+    width: 12px;
+    border: 2.5px solid var(--text-main);
 }
 
 .matrix::before { 
     left: 0; 
     border-right: none; 
+    border-radius: 4px 0 0 4px;
 }
 .matrix::after { 
     right: 0; 
     border-left: none; 
+    border-radius: 0 4px 4px 0;
 }
 
 .matrix__row { 
@@ -238,74 +303,77 @@ textarea.equation-input {
 
 .matrix__cell {
     min-width: 65px;
-    padding: 0.5rem 1rem;
+    padding: 0.6rem 1.2rem;
     text-align: right;
-    font-family: 'Fira Code', monospace; /* Tipografía para alineación perfecta */
+    font-family: 'Fira Code', monospace;
     font-size: 1.15rem;
-    font-weight: 500;
-    color: var(--text-main);
+    font-weight: 600;
+    color: #1e293b;
 }
 
 .matrix__cell--result {
-    border-left: 2px solid var(--border-color);
-    margin-left: 0.75rem;
-    padding-left: 1.25rem;
+    border-left: 2px dashed #cbd5e1;
+    margin-left: 0.5rem;
+    padding-left: 1.5rem;
     color: var(--primary-color);
 }
 
-/* Alertas */
+/* =========================================
+   ALERTAS
+   ========================================= */
 .alert {
-    padding: 1rem 1.25rem;
+    padding: 1rem 1.5rem;
     margin-bottom: 1.5rem;
-    border-radius: var(--border-radius);
-    font-weight: 500;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
     text-align: left;
     display: flex;
     align-items: center;
-    box-shadow: var(--shadow-sm);
-    animation: slideIn 0.3s ease-out forwards;
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+    box-shadow: var(--shadow-soft);
+    animation: fadeSlideUp 0.3s ease-out forwards;
 }
 
 .alert--error {
     background-color: #fef2f2;
     color: #991b1b;
     border: 1px solid #fecaca;
-    border-left: 4px solid #ef4444;
+    border-left: 5px solid var(--danger-color);
 }
 
-.alert--warning {
-    background-color: #fffbeb;
-    color: #92400e;
-    border: 1px solid #fde68a;
-    border-left: 4px solid #f59e0b;
-}
-
-/* Tipografía en listas de ecuaciones generadas por JS */
+/* =========================================
+   LISTAS DE ECUACIONES JS (Desglose)
+   ========================================= */
 ul {
     list-style: none;
-    padding-left: 0;
+    padding: 0;
+    margin: 0;
 }
 
 ul li {
     font-family: 'Fira Code', monospace;
-    font-size: 0.95rem !important;
-    color: var(--text-muted);
+    font-size: 1rem !important;
+    color: #475569;
+    background: #f8fafc;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
 }
 
 ul li strong {
     color: var(--text-main);
 }
 
-/* Responsivo */
+/* =========================================
+   RESPONSIVE DESIGN
+   ========================================= */
 @media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
     .calculator { 
         padding: 1.5rem; 
-        border-radius: 12px;
+        border-radius: 16px;
     }
     .config { 
         flex-direction: column; 
@@ -318,290 +386,7 @@ ul li strong {
     .config__input {
         width: 100%;
     }
-}
-    --primary-color: #0056b3;
-    --success-color: #28a745;
-    --bg-color: #f4f7f6;
-    --text-color: #333;
-    --border-radius: 8px;
-}
-
-/*
- * body elimina el margen predeterminado y añade 20px de separación del borde.
- * Flexbox con justify-content:center centra la tarjeta horizontalmente.
- * No fija altura máxima a toda la página: el documento puede crecer con los pasos.
- */
-body {
-    font-family: Arial, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-}
-
-/*
- * Tarjeta principal: width:100% aprovecha el espacio y max-width:800px limita
- * el ancho de contenido. padding añade separación interior; border-radius redondea;
- * box-shadow da sombra. No hay una regla global box-sizing:border-box: en esta
- * caja el padding se suma al ancho de contenido, dato relevante al ajustar móviles.
- */
-.calculator {
-    background: white;
-    padding: 2rem;
-    border-radius: var(--border-radius);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 800px;
-}
-
-/*
- * El encabezado centra su contenido y lo separa del formulario. El título usa
- * el color primario y elimina su margen propio; modulos.js cambia solo su texto.
- */
-.calculator__header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.calculator__title {
-    color: var(--primary-color);
-    margin: 0;
-}
-
-/*
- * config organiza controles en una fila flexible, permite envolverlos con
- * flex-wrap y mantiene espacios con gap. config__group alinea etiqueta y campo.
- * Los style inline de algunas secciones cambian la dirección a columna o el ancho;
- * por eso no toda la disposición está definida únicamente en este archivo.
- */
-.config {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-bottom: 2rem;
-}
-
-.config__group {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/*
- * Ancho base de 60px para controles cortos como m/n. Los select de HTML declaran
- * width:auto mediante style para que quepan sus etiquetas más largas.
- */
-.config__input {
-    width: 60px;
-    padding: 5px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
-
-/*
- * Estilo común de botones: color de texto, espaciado, cursor y transición.
- * :hover reduce la opacidad al colocar el puntero. btn--primary usa azul;
- * btn--success usa verde y ocupa todo el ancho, con separación superior.
- * La clase success identifica un tipo de botón, no valida que la operación sea correcta.
- */
-.btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-weight: bold;
-    color: white;
-    transition: opacity 0.3s;
-}
-
-.btn:hover { opacity: 0.9; }
-.btn--primary { background-color: var(--primary-color); }
-.btn--success { background-color: var(--success-color); width: 100%; margin-top: 1rem; }
-
-/*
- * hidden es el mecanismo que usa JS para ocultar módulos, alertas y resultados.
- * display:none elimina su espacio visual; NO borra el elemento del DOM ni sus datos.
- * Un querySelectorAll todavía puede encontrar un elemento con esta clase.
- */
-.hidden { display: none; }
-
-/*
- * equation-list dispone entradas en columna y deja espacio entre ellas.
- * equation-input se comparte entre ecuaciones, conversión, vectores y matrices.
- * Es una clase VISUAL común; usarla en una búsqueda JS global también recoge
- * campos ajenos al módulo que está visible.
- */
-.equation-list {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-/*
- * width:100% y box-sizing:border-box hacen que padding y borde queden dentro del
- * ancho del campo, en vez de sumar tamaño y desbordar su contenedor.
- */
-.equation-input {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 12px;
-    font-size: 1.1rem;
-    border: 2px solid #ccc;
-    border-radius: var(--border-radius);
-    transition: border-color 0.3s;
-}
-
-/*
- * LÍMITES DEL TAMAÑO DE LOS TEXTAREA
- * resize:vertical permite arrastrar solo la altura. min-width/max-width al 100%
- * mantienen el ancho ajustado al padre. La altura puede variar entre 100 y 300px.
- * overflow:auto permite desplazarse por el contenido cuando no cabe.
- * No limita la cantidad de números escritos ni el tamaño matemático de una matriz;
- * es exclusivamente una restricción visual para evitar estirar los campos sin límite.
- * Aplica a vec-conjunto, mat-a y mat-b porque son textarea con equation-input.
- */
-textarea.equation-input {
-    resize: vertical;
-    min-width: 100%;
-    max-width: 100%;
-    min-height: 100px;
-    max-height: 300px;
-    overflow: auto;
-}
-
-/*
- * Al recibir foco, el campo cambia el borde al color principal. outline:none
- * quita el contorno predeterminado; el cambio de borde es la señal visual de foco.
- */
-.equation-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-}
-
-/*
- * Caja de cada paso calculado. overflow-x:auto crea desplazamiento horizontal
- * si una matriz es más ancha que la caja, sin forzar que la tarjeta crezca con ella.
- * Los renderizadores JS crean estos bloques dinámicamente después de la respuesta.
- */
-.results__step {
-    background: #fdfdfd;
-    border: 1px solid #eee;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    border-radius: var(--border-radius);
-    overflow-x: auto;
-    text-align: center;
-}
-
-/*
- * Clasificación destacada: se usa para el tipo de sistema, el mensaje de combinación
- * lineal y la equivalencia de conversión. No implica que el resultado sea positivo:
- * un sistema inconsistente también se presenta en este estilo.
- */
-.results__classification {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: var(--primary-color);
-    text-align: center;
-    margin: 2rem 0;
-}
-
-/* Matrices */
-/*
- * matrix envuelve la cuadrícula visual. inline-block adapta la caja al contenido;
- * position:relative sirve como referencia para colocar los corchetes.
- * ::before y ::after son pseudoelementos decorativos: sus bordes dibujan corchetes
- * sin imágenes. top/bottom:0 los extiende a la altura de la matriz.
- */
-.matrix {
-    display: inline-block;
-    position: relative;
-    margin: 1rem 0;
-    padding: 0.5rem 1rem;
-}
-
-.matrix::before,
-.matrix::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    width: 8px;
-    border: 2px solid var(--primary-color);
-}
-
-.matrix::before { left: 0; border-right: none; border-radius: 4px 0 0 4px; }
-.matrix::after { right: 0; border-left: none; border-radius: 0 4px 4px 0; }
-
-/*
- * Cada fila usa flex para colocar celdas horizontalmente. Las celdas tienen ancho
- * mínimo y fuente monoespaciada. Es una representación con div, no una tabla HTML:
- * no existe un cálculo automático compartido del ancho de cada columna.
- * Los números excepcionalmente largos pueden afectar la alineación entre filas.
- */
-.matrix__row { display: flex; justify-content: center; }
-
-.matrix__cell {
-    min-width: 60px;
-    padding: 0.4rem 0.8rem;
-    text-align: right;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 1.1rem;
-    color: var(--text-color);
-}
-
-/*
- * Variante para la última columna b de una matriz aumentada en main.js.
- * La línea discontinua distingue coeficientes y términos independientes.
- * renderMatrizHtml de vectores_matrices.js usa solo matrix__cell, incluso en pasos
- * de combinación lineal; por tanto esa vista no añade esta separación especial.
- */
-.matrix__cell--result {
-    border-left: 2px dashed #ccc;
-    margin-left: 0.5rem;
-    padding-left: 1rem;
-    font-weight: bold;
-}
-
-/* Alertas */
-/*
- * Alertas dentro de la página: alert define la caja; alert--error la pinta roja;
- * alert--warning amarilla. JS decide cuándo mostrar/ocultar mediante hidden.
- * La transición de opacity no crea por sí sola un desvanecimiento al alternar
- * display:none: el temporizador y la visibilidad los gestiona JavaScript.
- */
-.alert {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: var(--border-radius);
-    font-weight: bold;
-    text-align: center;
-    transition: opacity 0.3s ease-in-out;
-}
-
-.alert--error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
-}
-
-.alert--warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeeba;
-}
-
-/*
- * Adaptación a pantallas de hasta 600px: reduce padding, coloca config en columna
- * y ensancha botones. No sustituye las demás reglas de ancho mínimo ni impone una
- * altura máxima al documento; las restricciones de textarea siguen aplicándose.
- */
-@media (max-width: 600px) {
-    .calculator { padding: 1rem; }
-    .config { flex-direction: column; align-items: stretch; }
-    .btn { width: 100%; }
+    .calculator__title {
+        font-size: 1.8rem;
+    }
 }
