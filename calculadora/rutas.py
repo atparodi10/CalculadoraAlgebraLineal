@@ -23,6 +23,7 @@ from .metodos.vectores import suma_vectores, resta_vectores, mult_escalar_vector
 from .metodos.operaciones_matrices import suma_matrices, resta_matrices, multiplicacion_matrices, mult_escalar_matriz
 
 
+
 def index():
     """
     Controlador de la ruta raíz ('/').
@@ -145,3 +146,4 @@ def api_matrices():
         "pasos": pasos,               
         "pasos_ecuaciones": pasos_eq  
     })
+    

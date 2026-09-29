@@ -33,7 +33,7 @@ def parsear_ecuacion(ecuacion_str, n):
     # 3: ([0-9]+) índice obligatorio después de x. El '?' permite omitir el signo;
     # '*' permite cero o más dígitos; '+' exige al menos uno. La barra ante el punto
     # hace que sea un punto literal. r'...' conserva las barras del patrón.
-    patron = r'([+-]?)([0-9]*\.?[0-9]*)x([0-9]+)'
+    patron = r'([+-]?)([0-9]*\.?[0-9]*)[x×]([0-9]+)'
     coincidencias = re.finditer(patron, lado_izq)
     
     for m in coincidencias:

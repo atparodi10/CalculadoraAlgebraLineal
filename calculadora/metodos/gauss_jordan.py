@@ -1,14 +1,4 @@
 # MOTOR DE SISTEMAS: GAUSS_JORDAN
-# Normalización del pivote y eliminación arriba y abajo en cada columna.
-# Contrato compartido por resolver_gauss, resolver_gauss_jordan y resolver_pivote:
-# A: lista de m filas y n coeficientes; b: lista de m términos independientes.
-# m y n: dimensiones ya interpretadas por el controlador. Se supone que son
-# coherentes con las listas; este motor no valida por sí mismo el formato.
-# Retorna (M, pasos, tipo_sistema, soluciones, pasos_ecuaciones).
-# M es la matriz aumentada transformada. pasos guarda matrices y mensajes;
-# pasos_ecuaciones guarda texto algebraico. soluciones sigue el orden x1..xn
-# y queda vacía cuando no existe una solución única.
-#
 # Las operaciones elementales conservan el conjunto de soluciones: intercambiar
 # filas, dividir una fila por un número no nulo y restar un múltiplo de otra fila.
 # A y b se conservan: se trabaja sobre filas copiadas en M. Se usa float, con

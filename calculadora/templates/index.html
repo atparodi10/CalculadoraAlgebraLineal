@@ -1,38 +1,37 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <!-- [SECCIÓN: METADATOS Y ESTILOS] -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Álgebra Lineal</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- [SECCIÓN: CONTENEDOR PRINCIPAL DE LA INTERFAZ] -->
     <div class="calculator">
         <div class="calculator__header">
-            <h1 class="calculator__title">Calculadora de Sistemas de Ecuaciones</h1>
+            <h1 class="calculator__title">Álgebra Lineal PRO</h1>
         </div>
 
-        <!-- [BLOQUE: NAVEGACIÓN Y SELECTOR DE MÓDULOS] -->
+        <!-- SELECTOR GENERAL DE MÓDULOS -->
         <div class="config">
             <div class="config__group">
-                <label for="modulo-activo">Función:</label>
-                <select class="config__input" style="width: auto;" id="modulo-activo" aria-controls="modulo-ecuaciones modulo-conversion modulo-vectores modulo-matrices">
+                <label for="modulo-activo">Módulo Activo:</label>
+                <!-- Se agregó 'modulo-romanos' a la propiedad aria-controls -->
+                <select class="config__input" style="width: auto;" id="modulo-activo" aria-controls="modulo-ecuaciones modulo-conversion modulo-vectores modulo-matrices modulo-romanos">
                     <option value="ecuaciones">Sistemas de ecuaciones</option>
-                    <option value="conversion">Sistemas numéricos</option>
+                    <option value="conversion">Conversión de Bases (Sistemas Numéricos)</option>
                     <option value="vectores">Vectores (Rn) y Comb. Lineal</option>
                     <option value="matrices">Operaciones Matriciales</option>
+                    <!-- NUEVA OPCIÓN AÑADIDA AQUÍ -->
+                    <option value="romanos">Conversor de Números Romanos</option>
                 </select>
             </div>
         </div>
 
-        <!-- [MÓDULO 1: SISTEMAS DE ECUACIONES LINEALES] -->
+        <!-- MÓDULO 1: SISTEMAS DE ECUACIONES -->
         <section id="modulo-ecuaciones" aria-label="Sistemas de ecuaciones">
-            <!-- [SUB-SECCIÓN: ALERTAS MÓDULO 1] -->
             <div id="ui-alert" class="alert hidden"></div>
             
-            <!-- [SUB-SECCIÓN: CONFIGURACIÓN DEL SISTEMA] -->
             <div class="config">
                 <div class="config__group">
                     <label>Filas (m):</label>
@@ -53,67 +52,61 @@
                 <button class="btn btn--primary" id="btn-generate">Generar Campos</button>
             </div>
 
-            <!-- [SUB-SECCIÓN: CONTENEDOR DINÁMICO DE ECUACIONES] -->
             <div id="equation-container" class="hidden">
-                <div style="margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-left: 4px solid var(--primary-color); text-align: left; border-radius: 4px;">
+                <div style="margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-left: 5px solid var(--primary-color); text-align: left; border-radius: 8px;">
                     <p style="margin: 0; color: #333;"><strong>Instrucciones de formato:</strong></p>
-                    <ul style="margin: 5px 0 0 20px; color: #555; font-size: 0.95rem;">
-                        <li>Escribe tus variables utilizando la letra <strong>x</strong> seguida de su número (ej. <strong>x1, x2, x3</strong>).</li>
-                        <li>Toda ecuación debe contener obligatoriamente el signo de igualdad (<strong>=</strong>).</li>
-                        <li><strong>Ejemplo válido:</strong> <code>2x1 - 3.5x2 + 4x3 = 5</code></li>
+                    <ul style="margin: 5px 0 0 20px; color: #555;">
+                        <li>Usa la letra <strong>x</strong> seguida de un número (ej. <strong>x1, x2</strong>).</li>
+                        <li>Debe incluir el signo de igualdad (<strong>=</strong>). Ej: <code>2x1 - 3x2 = 5</code></li>
                     </ul>
                 </div>
-
                 <div id="equation-list" class="equation-list"></div>
                 <button class="btn btn--success" id="btn-solve">Resolver Sistema</button>
             </div>
-
-            <!-- [SUB-SECCIÓN: RESULTADOS MÓDULO 1] -->
             <div id="results" class="hidden"></div>
         </section>
 
-        <!-- [MÓDULO 2: CONVERSIÓN DE BASES NUMÉRICAS] -->
+        <!-- MÓDULO 2: CONVERSIÓN DE BASES NUMÉRICAS -->
         <section id="modulo-conversion" class="hidden" aria-label="Sistemas numéricos">
-            <!-- [SUB-SECCIÓN: ALERTAS MÓDULO 2] -->
             <div id="conversion-alert" class="alert alert--error hidden" role="alert"></div>
 
-            <!-- [SUB-SECCIÓN: FORMULARIO DE CONVERSIÓN] -->
             <form id="conversion-form">
                 <div class="config">
                     <div class="config__group">
-                        <label for="conversion-mode">Conversión:</label>
-                        <select class="config__input" style="width: auto; max-width: 100%;" id="conversion-mode">
-                            <option value="desde_decimal">Decimal a otra base</option>
-                            <option value="a_decimal">Otra base a decimal</option>
+                        <label for="conversion-origen">Base Origen:</label>
+                        <select class="config__input" style="width: auto;" id="conversion-origen">
+                            <option value="2">Binario (2)</option>
+                            <option value="8">Octal (8)</option>
+                            <option value="10" selected>Decimal (10)</option>
+                            <option value="16">Hexadecimal (16)</option>
                         </select>
                     </div>
                     <div class="config__group">
-                        <label id="conversion-base-label" for="conversion-base">Base de destino:</label>
-                        <select class="config__input" style="width: auto;" id="conversion-base">
-                            <option value="2">Binario (2)</option>
+                        <label for="conversion-destino">Base Destino:</label>
+                        <select class="config__input" style="width: auto;" id="conversion-destino">
+                            <option value="2" selected>Binario (2)</option>
                             <option value="8">Octal (8)</option>
+                            <option value="10">Decimal (10)</option>
                             <option value="16">Hexadecimal (16)</option>
-                            <option value="10" hidden disabled>Decimal (10)</option>
                         </select>
                     </div>
                 </div>
+                
                 <div class="equation-list">
-                    <label for="conversion-number" id="conversion-number-label">Número decimal:</label>
+                    <label for="conversion-number" id="conversion-number-label">Número a convertir:</label>
                     <input class="equation-input" type="text" id="conversion-number" maxlength="66"
-                           placeholder="Ej.: 25 o 25.5" autocomplete="off" spellcheck="false"
-                           aria-describedby="conversion-help" required>
-                    <small id="conversion-help">Hasta 64 dígitos. Podés usar signo y punto o coma para la parte fraccionaria. No uses separadores de miles ni prefijos como 0b o 0x.</small>
+                           placeholder="Ej: 25.5, 1FA2, 1011.01" autocomplete="off" spellcheck="false" required>
+                    <small id="conversion-help" style="color: var(--text-muted); font-weight: 500;">Letras A-F permitidas para Hexadecimal. No uses separadores de miles.</small>
                 </div>
+                
                 <button class="btn btn--success" type="submit" id="conversion-submit">Convertir número</button>
             </form>
 
-            <!-- [SUB-SECCIÓN: RESULTADOS MÓDULO 2] -->
             <div id="conversion-results" class="hidden" aria-live="polite"></div>
         </section>
 
-        <!-- [MÓDULO 3: VECTORES EN R^n Y COMBINACIÓN LINEAL] -->
+        <!-- MÓDULO 3: VECTORES (Rn) Y COMBINACIÓN LINEAL -->
         <section id="modulo-vectores" class="hidden" aria-label="Vectores y Combinación Lineal">
-            <!-- [SUB-SECCIÓN: OPERACIONES BÁSICAS DE VECTORES] -->
             <h3 style="color: var(--primary-color);">Operaciones Básicas</h3>
             <div class="config" style="flex-direction: column; align-items: stretch;">
                 <input class="equation-input" id="vec-dim" type="number" placeholder="Dimensión n (Ej: 3)" min="1">
@@ -128,22 +121,19 @@
                 </div>
             </div>
 
-            <!-- [SUB-SECCIÓN: COMBINACIÓN LINEAL] -->
             <h3 style="color: var(--primary-color); margin-top: 2rem;">Combinación Lineal</h3>
             <div class="config" style="flex-direction: column; align-items: stretch;">
-                <textarea class="equation-input" id="vec-conjunto" rows="4" placeholder="Conjunto de vectores v1, v2... vk (Uno por línea, Ej: 1, 2, 3)"></textarea>
-                <input class="equation-input" id="vec-b" style="margin-top: 10px;" placeholder="Vector b a evaluar (Ej: 5, 4, 3)">
+                <textarea class="equation-input" id="vec-conjunto" rows="4" placeholder="Conjunto de vectores v1, v2... vk (Uno por línea)"></textarea>
+                <input class="equation-input" id="vec-b" style="margin-top: 10px;" placeholder="Vector b a evaluar">
                 <button class="btn btn--success" id="btn-vec-comb" style="margin-top: 10px;">Verificar Combinación Lineal</button>
             </div>
             
-            <!-- [SUB-SECCIÓN: ALERTAS Y RESULTADOS MÓDULO 3] -->
             <div id="vec-alert" class="alert hidden" role="alert" style="margin-top: 15px;"></div>
             <div id="vec-results" class="hidden" aria-live="polite" style="margin-top: 20px;"></div>
         </section>
 
-        <!-- [MÓDULO 4: OPERACIONES MATRICIALES] -->
+        <!-- MÓDULO 4: OPERACIONES MATRICIALES -->
         <section id="modulo-matrices" class="hidden" aria-label="Operaciones Matriciales">
-            <!-- [SUB-SECCIÓN: ENTRADAS DE MATRICES Y ESCALAR] -->
             <div style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
                 <div style="flex: 1; min-width: 250px;">
                     <label><b>Matriz A</b> (Filas separadas por Enter)</label>
@@ -160,7 +150,6 @@
                 <input class="config__input" type="number" step="any" id="mat-c" placeholder="2">
             </div>
 
-            <!-- [SUB-SECCIÓN: BOTONES DE CÁLCULO MATRICIAL] -->
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <button class="btn btn--primary" id="btn-mat-suma">Sumar A + B</button>
                 <button class="btn btn--primary" id="btn-mat-resta">Restar A - B</button>
@@ -168,16 +157,15 @@
                 <button class="btn btn--primary" id="btn-mat-escalar">Multiplicar c * A</button>
             </div>
             
-            <!-- [SUB-SECCIÓN: ALERTAS Y RESULTADOS MÓDULO 4] -->
             <div id="mat-alert" class="alert hidden" role="alert" style="margin-top: 15px;"></div>
             <div id="mat-results" class="hidden" aria-live="polite" style="margin-top: 20px;"></div>
         </section>
-    </div>
 
-    <!-- [BLOQUE FINAL: ENLACES A SCRIPTS JS (LÓGICA DEL FRONTEND)] -->
+    <!-- SCRIPTS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     <script src="{{ url_for('static', filename='js/conversion.js') }}"></script>
     <script src="{{ url_for('static', filename='js/modulos.js') }}"></script>
     <script src="{{ url_for('static', filename='js/vectores_matrices.js') }}"></script>
+
 </body>
 </html>
