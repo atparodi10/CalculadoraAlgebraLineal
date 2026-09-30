@@ -23,14 +23,38 @@ from .metodos.vectores import suma_vectores, resta_vectores, mult_escalar_vector
 from .metodos.operaciones_matrices import suma_matrices, resta_matrices, multiplicacion_matrices, mult_escalar_matriz
 
 
+# =========================================
+# RUTAS DE PÁGINAS (cada módulo tiene su propia página)
+# =========================================
 
 def index():
-    """
-    Controlador de la ruta raíz ('/').
-    Renderiza y sirve el archivo HTML principal de la calculadora al cliente web.
-    """
-    return render_template('index.html')
+    """Página principal con tarjetas de módulos."""
+    return render_template('index.html', active_page='home')
 
+
+def page_ecuaciones():
+    """Página dedicada a sistemas de ecuaciones lineales."""
+    return render_template('ecuaciones.html', active_page='ecuaciones')
+
+
+def page_conversion():
+    """Página dedicada a conversión de bases numéricas."""
+    return render_template('conversion.html', active_page='conversion')
+
+
+def page_vectores():
+    """Página dedicada a operaciones con vectores y combinación lineal."""
+    return render_template('vectores.html', active_page='vectores')
+
+
+def page_matrices():
+    """Página dedicada a operaciones matriciales."""
+    return render_template('matrices.html', active_page='matrices')
+
+
+# =========================================
+# API ENDPOINTS
+# =========================================
 
 def calcular():
     """

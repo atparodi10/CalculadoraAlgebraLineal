@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Operaciones Matriciales — Lineal Tanix{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/matrices.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Operaciones Matriciales</h1>
+    <p class="page-header__subtitle">Suma, resta, multiplicación y escalar con desglose completo</p>
+</div>
+
+<div class="card">
+    <div class="matrices-input-grid">
+        <div class="form-group">
+            <label for="mat-a" class="form-label">
+                <strong>Matriz A</strong> <span class="form-hint--inline">(filas separadas por Enter, valores por espacio)</span>
+            </label>
+            <textarea class="form-textarea" id="mat-a" rows="4" placeholder="1 2 3&#10;4 5 6"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="mat-b" class="form-label">
+                <strong>Matriz B</strong> <span class="form-hint--inline">(filas separadas por Enter, valores por espacio)</span>
+            </label>
+            <textarea class="form-textarea" id="mat-b" rows="4" placeholder="7 8&#10;9 10&#10;11 12"></textarea>
+        </div>
+    </div>
+
+    <div class="form-group form-group--inline">
+        <label for="mat-c" class="form-label">Escalar c:</label>
+        <input class="form-input form-input--sm" type="number" step="any" id="mat-c" placeholder="2">
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn--primary" id="btn-mat-suma">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            A + B
+        </button>
+        <button class="btn btn--primary" id="btn-mat-resta">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            A − B
+        </button>
+        <button class="btn btn--primary" id="btn-mat-mult">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            A × B
+        </button>
+        <button class="btn btn--primary" id="btn-mat-escalar">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
+            c · A
+        </button>
+    </div>
+</div>
+
+<div id="mat-alert" class="alert hidden" role="alert"></div>
+<div id="mat-results" class="hidden" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/matrices.js') }}"></script>
+{% endblock %}

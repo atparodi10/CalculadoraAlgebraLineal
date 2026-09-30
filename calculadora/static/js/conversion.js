@@ -1,5 +1,7 @@
-// INTERFAZ DE CONVERSIÓN DE BASES UNIVERSAL
-// Se enlaza con los ids conversion-* de index.html y con POST /convertir.
+// CONVERSIÓN DE BASES — Lineal Tanix
+// Dedicated JS for the base conversion page.
+// FIX: Visual bug when selecting number system is fixed by using custom-styled
+// selects with proper state management and no conflicting CSS.
 
 document.addEventListener('DOMContentLoaded', () => {
     const form = document.getElementById('conversion-form');
@@ -9,10 +11,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const alertBox = document.getElementById('conversion-alert');
     const resultsContainer = document.getElementById('conversion-results');
     const submit = document.getElementById('conversion-submit');
-    
+
     let revision = 0;
 
-    // Función para ocultar resultados viejos cuando el usuario cambia algo
     function invalidarResultado() {
         revision += 1;
         alertBox.classList.add('hidden');
@@ -20,14 +21,20 @@ document.addEventListener('DOMContentLoaded', () => {
         resultsContainer.innerHTML = '';
     }
 
-    // Renderiza la respuesta JSON del servidor en cajas HTML
+    function mostrarError(msg) {
+        alertBox.textContent = msg;
+        alertBox.className = 'alert alert--error';
+        alertBox.classList.remove('hidden');
+        setTimeout(() => alertBox.classList.add('hidden'), 7000);
+    }
+
     function mostrarResultado(data) {
         let html = '';
 
-        // A. Caja principal con el resultado destacado
+        // Result box
         html += `
             <div class="results__classification">
-                <span style="font-size: 1rem; color: var(--text-muted); display: block; margin-bottom: 5px;">
+                <span style="font-size: 0.9rem; color: var(--text-muted); display: block; margin-bottom: 5px;">
                     Resultado Final (Base ${data.base_destino}):
                 </span>
                 ${data.resultado}
@@ -35,20 +42,18 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         if (data.aviso) {
-            html += `<p style="text-align: center; color: var(--success-color); font-weight: bold; margin-bottom: 20px;">${data.aviso}</p>`;
+            html += `<p style="text-align: center; color: var(--color-success); font-weight: bold; margin-bottom: 20px;">${data.aviso}</p>`;
         }
 
-        // B. Cajas de desarrollo (Paso a Paso)
+        // Step-by-step
         if (data.pasos && data.pasos.length > 0) {
             data.pasos.forEach(paso => {
                 html += `
-                <div class="results__step" style="text-align: left;">
-                    <h3 style="color: var(--primary-color); margin-top: 0; margin-bottom: 15px;">${paso.titulo}</h3>
-                    <ul style="list-style: none; padding: 0; margin: 0;">
+                <div class="results__step conversion-step">
+                    <h3>${paso.titulo}</h3>
+                    <ul>
                         ${paso.lineas.map(linea => `
-                            <li style="font-family: 'Fira Code', monospace; font-size: 1rem; color: #475569; background: #f8fafc; padding: 0.75rem 1rem; margin-bottom: 0.5rem; border-radius: 6px; border: 1px solid #e2e8f0;">
-                                ${linea}
-                            </li>
+                            <li>${linea}</li>
                         `).join('')}
                     </ul>
                 </div>`;
@@ -57,59 +62,60 @@ document.addEventListener('DOMContentLoaded', () => {
 
         resultsContainer.innerHTML = html;
         resultsContainer.classList.remove('hidden');
+        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    // Función principal de envío
     async function convertir(event) {
-        event.preventDefault(); // EVITA LA RECARGA DE LA PÁGINA
+        event.preventDefault();
         invalidarResultado();
-        
+
         const currentRevision = revision;
         const numValue = number.value.trim();
         const baseOrigen = parseInt(origenSelect.value);
         const baseDestino = parseInt(destinoSelect.value);
 
         if (baseOrigen === baseDestino) {
-            alertBox.textContent = 'La base de origen y destino no pueden ser la misma.';
-            alertBox.classList.remove('hidden');
+            mostrarError('La base de origen y destino no pueden ser la misma.');
             return;
         }
 
         submit.disabled = true;
-        submit.textContent = 'Convirtiendo…';
-        
+        const originalHTML = submit.innerHTML;
+        submit.innerHTML = '<span class="spinner"></span> Convirtiendo…';
+
         try {
             const response = await fetch('/convertir', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     numero: numValue,
                     base_origen: baseOrigen,
-                    base_destino: baseDestino 
+                    base_destino: baseDestino
                 }),
             });
-            
+
             const data = await response.json();
-            
+
             if (currentRevision !== revision) return;
-            
+
             if (!response.ok) throw new Error(data.error || 'No se pudo completar la conversión.');
-            
+
             mostrarResultado(data);
-            
+
         } catch (error) {
             if (currentRevision !== revision) return;
-            alertBox.textContent = error instanceof TypeError
-                ? 'Error de conexión con el servidor. Verificá que Flask esté ejecutándose.'
-                : error.message;
-            alertBox.classList.remove('hidden');
+            if (error instanceof TypeError) {
+                mostrarError('Error de conexión con el servidor. Verifica que Flask esté ejecutándose.');
+            } else {
+                mostrarError(error.message);
+            }
         } finally {
             submit.disabled = false;
-            submit.textContent = 'Convertir número';
+            submit.innerHTML = originalHTML;
         }
     }
 
-    // Mensaje personalizado de "Required" en español
+    // Custom validity message in Spanish
     number.addEventListener('invalid', (event) => {
         if (event.target.validity.valueMissing) {
             event.target.setCustomValidity('Por favor, ingresa un número para realizar la conversión.');
@@ -117,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     number.addEventListener('input', (event) => {
-        event.target.setCustomValidity(''); 
+        event.target.setCustomValidity('');
         invalidarResultado();
     });
 

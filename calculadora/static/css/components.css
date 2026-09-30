@@ -1,0 +1,78 @@
+/*
+ * COMPONENT STYLES — Lineal Tanix
+ * Shared components used across multiple module pages.
+ */
+
+/* Matrices input grid (shared by matrices page) */
+.matrices-input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Results steps list */
+.results__step h3 {
+    color: var(--color-primary);
+    font-family: 'Outfit', 'Inter', sans-serif;
+    margin-bottom: 0.75rem;
+}
+
+.results__step ul {
+    padding: 0;
+    margin: 0;
+}
+
+.results__step ul li {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    background: var(--bg-card-alt);
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    transition: background var(--transition-smooth), border-color var(--transition-smooth), color var(--transition-smooth);
+}
+
+.results__step ul li strong {
+    color: var(--text-primary);
+}
+
+/* Loading spinner */
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.7s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Conversion result step detail */
+.conversion-step {
+    text-align: left;
+}
+
+.conversion-step h3 {
+    color: var(--color-primary);
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-family: 'Outfit', 'Inter', sans-serif;
+}
+
+.conversion-step li {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    background: var(--bg-card-alt);
+    padding: 0.7rem 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}

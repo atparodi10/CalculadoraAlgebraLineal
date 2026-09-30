@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Vectores & Combinación Lineal — Lineal Tanix{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/vectores.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Vectores en Rⁿ y Combinación Lineal</h1>
+    <p class="page-header__subtitle">Operaciones vectoriales con procedimiento paso a paso</p>
+</div>
+
+<!-- Operaciones Básicas -->
+<div class="card">
+    <h2 class="card__title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        Operaciones Básicas
+    </h2>
+
+    <div class="form-grid form-grid--2">
+        <div class="form-group">
+            <label for="vec-dim" class="form-label">Dimensión n</label>
+            <input class="form-input" id="vec-dim" type="number" placeholder="Ej: 3" min="1">
+        </div>
+        <div class="form-group">
+            <label for="vec-c" class="form-label">Escalar c</label>
+            <input class="form-input" id="vec-c" type="number" step="any" placeholder="Ej: 3">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="vec-u" class="form-label">Vector u</label>
+        <input class="form-input" id="vec-u" placeholder="Ej: 1, -2, 3">
+    </div>
+    <div class="form-group">
+        <label for="vec-v" class="form-label">Vector v</label>
+        <input class="form-input" id="vec-v" placeholder="Ej: 4, 5, -6">
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn--primary" id="btn-vec-suma">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Suma (u + v)
+        </button>
+        <button class="btn btn--primary" id="btn-vec-resta">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Resta (u − v)
+        </button>
+        <button class="btn btn--primary" id="btn-vec-mult">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Escalar (c · u)
+        </button>
+    </div>
+</div>
+
+<!-- Combinación Lineal -->
+<div class="card">
+    <h2 class="card__title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Combinación Lineal
+    </h2>
+
+    <div class="form-group">
+        <label for="vec-conjunto" class="form-label">Conjunto de vectores (uno por línea)</label>
+        <textarea class="form-textarea" id="vec-conjunto" rows="4" placeholder="1, 0, 0&#10;0, 1, 0&#10;0, 0, 1"></textarea>
+    </div>
+    <div class="form-group">
+        <label for="vec-b" class="form-label">Vector b a evaluar</label>
+        <input class="form-input" id="vec-b" placeholder="Ej: 3, 5, -2">
+    </div>
+    <button class="btn btn--success btn--full" id="btn-vec-comb">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Verificar Combinación Lineal
+    </button>
+</div>
+
+<div id="vec-alert" class="alert hidden" role="alert"></div>
+<div id="vec-results" class="hidden" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/vectores.js') }}"></script>
+{% endblock %}

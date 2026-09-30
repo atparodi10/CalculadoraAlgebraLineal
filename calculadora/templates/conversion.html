@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}Conversión de Bases — Lineal Tanix{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/conversion.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Conversión de Sistemas Numéricos</h1>
+    <p class="page-header__subtitle">Binario, Octal, Decimal y Hexadecimal con desarrollo posicional</p>
+</div>
+
+<div class="card">
+    <div id="conversion-alert" class="alert alert--error hidden" role="alert"></div>
+
+    <form id="conversion-form" class="conversion-form">
+        <div class="form-grid form-grid--2">
+            <div class="form-group">
+                <label for="conversion-origen" class="form-label">Base Origen</label>
+                <select class="form-select" id="conversion-origen">
+                    <option value="2">Binario (2)</option>
+                    <option value="8">Octal (8)</option>
+                    <option value="10" selected>Decimal (10)</option>
+                    <option value="16">Hexadecimal (16)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="conversion-destino" class="form-label">Base Destino</label>
+                <select class="form-select" id="conversion-destino">
+                    <option value="2" selected>Binario (2)</option>
+                    <option value="8">Octal (8)</option>
+                    <option value="10">Decimal (10)</option>
+                    <option value="16">Hexadecimal (16)</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="conversion-number" class="form-label" id="conversion-number-label">Número a convertir</label>
+            <input class="form-input form-input--lg" type="text" id="conversion-number" maxlength="66"
+                   placeholder="Ej: 25.5, 1FA2, 1011.01" autocomplete="off" spellcheck="false" required>
+            <small class="form-hint" id="conversion-help">Letras A-F permitidas para Hexadecimal. No uses separadores de miles.</small>
+        </div>
+
+        <button class="btn btn--success btn--full" type="submit" id="conversion-submit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            Convertir número
+        </button>
+    </form>
+</div>
+
+<div id="conversion-results" class="hidden" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/conversion.js') }}"></script>
+{% endblock %}

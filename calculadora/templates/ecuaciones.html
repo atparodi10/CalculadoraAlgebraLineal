@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Sistemas de Ecuaciones — Lineal Tanix{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ecuaciones.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Sistemas de Ecuaciones Lineales</h1>
+    <p class="page-header__subtitle">Resuelve con Gauss, Gauss-Jordan o Pivoteo Parcial</p>
+</div>
+
+<div class="card">
+    <div id="ui-alert" class="alert hidden"></div>
+
+    <div class="form-grid">
+        <div class="form-group">
+            <label for="input-m" class="form-label">Filas (m)</label>
+            <input class="form-input" type="number" id="input-m" value="3" min="1">
+        </div>
+        <div class="form-group">
+            <label for="input-n" class="form-label">Variables (n)</label>
+            <input class="form-input" type="number" id="input-n" value="3" min="1">
+        </div>
+        <div class="form-group">
+            <label for="select-method" class="form-label">Método</label>
+            <select id="select-method" class="form-select">
+                <option value="gauss">Eliminación de Gauss</option>
+                <option value="gauss_jordan">Gauss-Jordan</option>
+                <option value="pivote">Pivoteo Parcial (Dos Fases)</option>
+            </select>
+        </div>
+        <div class="form-group form-group--action">
+            <button class="btn btn--primary" id="btn-generate">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                Generar Campos
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="equation-container" class="card hidden">
+    <div class="info-box">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+        <div>
+            <p><strong>Formato de entrada:</strong> Escribe cada ecuación con variables <code>x1, x2, x3...</code></p>
+            <p>Ejemplo: <code>2x1 - 3x2 + 4x3 = 5</code></p>
+        </div>
+    </div>
+    <div id="equation-list" class="equation-list"></div>
+    <button class="btn btn--success btn--full" id="btn-solve">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+        Resolver Sistema
+    </button>
+</div>
+
+<div id="results" class="hidden"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/ecuaciones.js') }}"></script>
+{% endblock %}
