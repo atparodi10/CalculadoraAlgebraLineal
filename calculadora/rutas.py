@@ -22,6 +22,9 @@ from .metodos.vectores import suma_vectores, resta_vectores, mult_escalar_vector
 # Importaciones del módulo de Operaciones Matriciales Básicas (incluyendo la nueva resta)
 from .metodos.operaciones_matrices import suma_matrices, resta_matrices, multiplicacion_matrices, mult_escalar_matriz
 
+# Importación del motor de Matriz Inversa por Gauss-Jordan
+from .metodos.inversa import inversa_matriz
+
 
 # =========================================
 # RUTAS DE PÁGINAS (cada módulo tiene su propia página)
@@ -159,6 +162,8 @@ def api_matrices():
         res, pasos, pasos_eq, err = multiplicacion_matrices(datos.get('A', []), datos.get('B', []))
     elif operacion == 'escalar':
         res, pasos, pasos_eq, err = mult_escalar_matriz(datos.get('c'), datos.get('A', []))
+    elif operacion == 'inversa':
+        res, pasos, pasos_eq, err = inversa_matriz(datos.get('A', []))
     else:
         return jsonify({"error": "Operación no soportada"}), 400
 

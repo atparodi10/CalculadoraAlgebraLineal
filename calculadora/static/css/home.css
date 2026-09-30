@@ -1,184 +1,184 @@
-/*
- * HOME PAGE STYLES — Lineal Tanix
- * Hero section and module cards grid.
- */
+    /*
+    * HOME PAGE STYLES — Lineal Tanix
+    * Hero section and module cards grid.
+    */
 
-/* =========================================
-   HERO
-   ========================================= */
-.hero {
-    text-align: center;
-    padding: 2rem 0 3rem;
-    animation: fadeSlideDown 0.6s ease-out;
-}
+    /* =========================================
+    HERO
+    ========================================= */
+    .hero {
+        text-align: center;
+        padding: 2rem 0 3rem;
+        animation: fadeSlideDown 0.6s ease-out;
+    }
 
-.hero__content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-}
-
-.hero__logo {
-    width: 120px;
-    height: auto;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl), var(--shadow-glow);
-    transition: transform var(--transition-smooth);
-    animation: floatLogo 3s ease-in-out infinite;
-}
-
-.hero__logo:hover {
-    transform: scale(1.08);
-}
-
-.hero__title {
-    font-family: 'Outfit', 'Inter', sans-serif;
-    font-size: 3rem;
-    font-weight: 900;
-    letter-spacing: -0.04em;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 50%, var(--color-primary) 100%);
-    background-size: 200% 100%;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    animation: shimmer 3s ease-in-out infinite;
-}
-
-.hero__subtitle {
-    font-size: 1.15rem;
-    color: var(--text-secondary);
-    max-width: 500px;
-    line-height: 1.6;
-}
-
-/* =========================================
-   MODULES GRID
-   ========================================= */
-.modules-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-    animation: fadeSlideUp 0.6s ease-out 0.2s both;
-}
-
-.module-card {
-    position: relative;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
-    padding: 2rem;
-    text-decoration: none;
-    overflow: hidden;
-    transition: all var(--transition-smooth);
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.module-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
-    opacity: 0.5;
-    transition: opacity var(--transition-normal);
-}
-
-.module-card:hover {
-    transform: translateY(-6px);
-    box-shadow: var(--shadow-xl), var(--shadow-glow);
-    border-color: var(--color-primary);
-}
-
-.module-card:hover::before {
-    opacity: 1;
-}
-
-.module-card__icon {
-    width: 64px;
-    height: 64px;
-    border-radius: var(--radius-md);
-    background: var(--color-primary-light);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-primary);
-    transition: all var(--transition-smooth);
-}
-
-.module-card:hover .module-card__icon {
-    background: var(--color-primary);
-    color: white;
-    transform: scale(1.1) rotate(-5deg);
-}
-
-.module-card__title {
-    font-family: 'Outfit', 'Inter', sans-serif;
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--text-primary);
-}
-
-.module-card__desc {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    line-height: 1.6;
-    flex-grow: 1;
-}
-
-.module-card__cta {
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: var(--color-primary);
-    transition: transform var(--transition-normal);
-    display: inline-block;
-}
-
-.module-card:hover .module-card__cta {
-    transform: translateX(5px);
-}
-
-/* =========================================
-   ANIMATIONS
-   ========================================= */
-@keyframes floatLogo {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
-}
-
-@keyframes shimmer {
-    0%, 100% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-}
-
-/* =========================================
-   RESPONSIVE
-   ========================================= */
-@media (max-width: 768px) {
-    .hero__title {
-        font-size: 2.2rem;
+    .hero__content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
     }
 
     .hero__logo {
-        width: 90px;
+        width: 120px;
+        height: auto;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xl), var(--shadow-glow);
+        transition: transform var(--transition-smooth);
+        animation: floatLogo 3s ease-in-out infinite;
     }
 
+    .hero__logo:hover {
+        transform: scale(1.08);
+    }
+
+    .hero__title {
+        font-family: 'Outfit', 'Inter', sans-serif;
+        font-size: 3rem;
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 50%, var(--color-primary) 100%);
+        background-size: 200% 100%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shimmer 3s ease-in-out infinite;
+    }
+
+    .hero__subtitle {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        max-width: 500px;
+        line-height: 1.6;
+    }
+
+    /* =========================================
+    MODULES GRID
+    ========================================= */
     .modules-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+        animation: fadeSlideUp 0.6s ease-out 0.2s both;
     }
 
     .module-card {
-        padding: 1.5rem;
+        position: relative;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-xl);
+        padding: 2rem;
+        text-decoration: none;
+        overflow: hidden;
+        transition: all var(--transition-smooth);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
     }
-}
 
-@media (max-width: 480px) {
-    .hero__title {
-        font-size: 1.8rem;
+    .module-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+        opacity: 0.5;
+        transition: opacity var(--transition-normal);
     }
-}
+
+    .module-card:hover {
+        transform: translateY(-6px);
+        box-shadow: var(--shadow-xl), var(--shadow-glow);
+        border-color: var(--color-primary);
+    }
+
+    .module-card:hover::before {
+        opacity: 1;
+    }
+
+    .module-card__icon {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-md);
+        background: var(--color-primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--color-primary);
+        transition: all var(--transition-smooth);
+    }
+
+    .module-card:hover .module-card__icon {
+        background: var(--color-primary);
+        color: white;
+        transform: scale(1.1) rotate(-5deg);
+    }
+
+    .module-card__title {
+        font-family: 'Outfit', 'Inter', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    .module-card__desc {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        flex-grow: 1;
+    }
+
+    .module-card__cta {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: var(--color-primary);
+        transition: transform var(--transition-normal);
+        display: inline-block;
+    }
+
+    .module-card:hover .module-card__cta {
+        transform: translateX(5px);
+    }
+
+    /* =========================================
+    ANIMATIONS
+    ========================================= */
+    @keyframes floatLogo {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-8px); }
+    }
+
+    @keyframes shimmer {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+    }
+
+    /* =========================================
+    RESPONSIVE
+    ========================================= */
+    @media (max-width: 768px) {
+        .hero__title {
+            font-size: 2.2rem;
+        }
+
+        .hero__logo {
+            width: 90px;
+        }
+
+        .modules-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .module-card {
+            padding: 1.5rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero__title {
+            font-size: 1.8rem;
+        }
+    }

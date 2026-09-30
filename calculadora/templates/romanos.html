@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Números Romanos — Lineal Tanix{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/romanos.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Conversor de Números Romanos</h1>
+    <p class="page-header__subtitle">Conversión bidireccional entre Romano y Arábigo con desarrollo paso a paso</p>
+</div>
+
+<div class="card">
+    <div id="romanos-alert" class="alert alert--error hidden" role="alert"></div>
+
+    <form id="romanos-form" class="romanos-form">
+        <div class="form-group">
+            <label for="romanos-direccion" class="form-label">Dirección de conversión</label>
+            <select class="form-select" id="romanos-direccion">
+                <option value="arabigo_a_romano">Arábigo → Romano (Ej: 2024 → MMXXIV)</option>
+                <option value="romano_a_arabigo">Romano → Arábigo (Ej: XIV → 14)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="romanos-input" class="form-label" id="romanos-input-label">Número arábigo (1–3999)</label>
+            <input class="form-input form-input--lg" type="text" id="romanos-input" maxlength="20"
+                   placeholder="Ej: 2024" autocomplete="off" spellcheck="false" required>
+            <small class="form-hint" id="romanos-help">Ingresa un número entero entre 1 y 3999.</small>
+        </div>
+
+        <button class="btn btn--success btn--full" type="submit" id="romanos-submit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            Convertir
+        </button>
+    </form>
+</div>
+
+<div id="romanos-results" class="hidden" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/romanos.js') }}"></script>
+{% endblock %}

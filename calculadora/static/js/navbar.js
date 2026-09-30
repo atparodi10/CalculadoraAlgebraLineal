@@ -1,5 +1,5 @@
 // NAVBAR — Lineal Tanix
-// Handles mobile hamburger toggle and scroll effects.
+// Handles mobile hamburger toggle, scroll effects, and dropdown menus.
 (function() {
     const navbarToggle = document.getElementById('navbar-toggle');
     const navbarMenu = document.getElementById('navbar-menu');
@@ -11,19 +11,45 @@
         navbarMenu.classList.toggle('active');
     });
 
-    // Close mobile menu when clicking a link
-    navbarMenu.querySelectorAll('.navbar__link').forEach(link => {
+    // Dropdown toggle (for mobile — on desktop, CSS :hover handles it)
+    const dropdownBtns = navbar.querySelectorAll('.navbar__link--dropdown');
+    dropdownBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const parent = btn.closest('.navbar__dropdown');
+            // Close other dropdowns
+            navbar.querySelectorAll('.navbar__dropdown.active').forEach(dd => {
+                if (dd !== parent) dd.classList.remove('active');
+            });
+            parent.classList.toggle('active');
+        });
+    });
+
+    // Close mobile menu when clicking a regular nav link
+    navbarMenu.querySelectorAll('.navbar__link:not(.navbar__link--dropdown)').forEach(link => {
         link.addEventListener('click', () => {
             navbarToggle.classList.remove('active');
             navbarMenu.classList.remove('active');
         });
     });
 
-    // Close mobile menu when clicking outside
+    // Close mobile menu when clicking a dropdown sub-link
+    navbarMenu.querySelectorAll('.navbar__dropdown-link').forEach(link => {
+        link.addEventListener('click', () => {
+            navbarToggle.classList.remove('active');
+            navbarMenu.classList.remove('active');
+        });
+    });
+
+    // Close mobile menu and dropdowns when clicking outside
     document.addEventListener('click', (e) => {
         if (!navbar.contains(e.target)) {
             navbarToggle.classList.remove('active');
             navbarMenu.classList.remove('active');
+            navbar.querySelectorAll('.navbar__dropdown.active').forEach(dd => {
+                dd.classList.remove('active');
+            });
         }
     });
 

@@ -38,21 +38,101 @@ document.addEventListener('DOMContentLoaded', () => {
         m = parseInt(document.getElementById('input-m').value);
         n = parseInt(document.getElementById('input-n').value);
 
-        const ramGB = navigator.deviceMemory || 4;
-        const celdasTotales = m * n;
-        const limiteCeldas = ramGB * 250;
-
-        if (celdasTotales > limiteCeldas) {
-            mostrarAlerta(`Tu dispositivo (${ramGB}GB RAM) no soporta procesar ${celdasTotales} celdas de forma óptima. Reduce el tamaño de la matriz.`, 'warning');
-            return;
-        }
-
         if (m <= 0 || n <= 0 || isNaN(m) || isNaN(n)) {
             mostrarAlerta('Las dimensiones de la matriz deben ser mayores a 0.', 'error');
             return;
         }
 
-        uiAlert.classList.add('hidden');
+        const ramGB = navigator.deviceMemory || 4;
+        const celdasTotales = m * n;
+        const limiteCeldas = ramGB * 250;
+
+        // Estimar tiempo basado en O(n³) de los métodos de resolución
+        const complejidad = Math.max(m, n) ** 3;
+        const factorHardware = ramGB / 4;
+        const operacionesPorSegundo = 500000 * factorHardware;
+        const tiempoSegundos = complejidad / operacionesPorSegundo;
+
+        let tiempoEstimado;
+        if (tiempoSegundos < 0.001) {
+            tiempoEstimado = '< 1 ms (instantáneo)';
+        } else if (tiempoSegundos < 1) {
+            tiempoEstimado = `~${Math.ceil(tiempoSegundos * 1000)} ms`;
+        } else if (tiempoSegundos < 60) {
+            tiempoEstimado = `~${tiempoSegundos.toFixed(1)} segundos`;
+        } else {
+            const minutos = Math.floor(tiempoSegundos / 60);
+            const segs = Math.round(tiempoSegundos % 60);
+            tiempoEstimado = `~${minutos} min ${segs} seg`;
+        }
+
+        const noSoportado = celdasTotales > limiteCeldas;
+
+        // Construir el diálogo de rendimiento
+        let html = '';
+        if (noSoportado) {
+            html = `
+                <div style="width:100%;">
+                    <p style="margin-bottom:8px;">
+                        <strong>⚠️ Hardware insuficiente:</strong> Tu dispositivo (${ramGB}GB RAM) 
+                        no soporta procesar una matriz de ${m}×${n} (${celdasTotales} celdas). 
+                        Límite estimado: ${limiteCeldas} celdas.
+                    </p>
+                    <div style="display:flex; gap:0.75rem; margin-top:12px; flex-wrap:wrap;">
+                        <button class="btn btn--primary" id="btn-perf-proceder" style="padding:0.5rem 1.2rem; font-size:0.9rem;">
+                            ⏳ Esperar / Proceder de todas formas
+                        </button>
+                        <button class="btn btn--primary" id="btn-perf-cancelar" style="padding:0.5rem 1.2rem; font-size:0.9rem; background:var(--color-danger);">
+                            ✕ No proceder
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            html = `
+                <div style="width:100%;">
+                    <p style="margin-bottom:8px;">
+                        <strong>⏱️ Tiempo estimado de resolución:</strong> ${tiempoEstimado}
+                        <span style="color:var(--text-muted); font-size:0.85rem;">
+                            (${celdasTotales} celdas · ${ramGB}GB RAM · Sistema ${m}×${n})
+                        </span>
+                    </p>
+                    <div style="display:flex; gap:0.75rem; margin-top:12px; flex-wrap:wrap;">
+                        <button class="btn btn--primary" id="btn-perf-proceder" style="padding:0.5rem 1.2rem; font-size:0.9rem;">
+                            ✓ Proceder
+                        </button>
+                        <button class="btn btn--primary" id="btn-perf-cancelar" style="padding:0.5rem 1.2rem; font-size:0.9rem; background:var(--color-danger);">
+                            ✕ No proceder
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        uiAlert.innerHTML = html;
+        uiAlert.className = `alert alert--${noSoportado ? 'error' : 'warning'}`;
+        uiAlert.classList.remove('hidden');
+
+        document.getElementById('btn-perf-proceder').addEventListener('click', () => {
+            uiAlert.classList.add('hidden');
+            generarCamposEcuaciones();
+        });
+
+        document.getElementById('btn-perf-cancelar').addEventListener('click', () => {
+            uiAlert.classList.add('hidden');
+            // Resetear el formulario
+            document.getElementById('input-m').value = '3';
+            document.getElementById('input-n').value = '3';
+            m = 3;
+            n = 3;
+            equationList.innerHTML = '';
+            equationContainer.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            resultsSection.innerHTML = '';
+        });
+    });
+
+    function generarCamposEcuaciones() {
         equationList.innerHTML = '';
 
         for (let i = 0; i < m; i++) {
@@ -82,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Focus the first input
         const firstInput = equationList.querySelector('input');
         if (firstInput) firstInput.focus();
-    });
+    }
 
     btnSolve.addEventListener('click', async () => {
         const metodo = document.getElementById('select-method').value;

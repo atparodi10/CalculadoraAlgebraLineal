@@ -36,10 +36,23 @@
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                     Ecuaciones
                 </a></li>
-                <li><a href="{{ url_for('page_conversion') }}" class="navbar__link {% if active_page == 'conversion' %}navbar__link--active{% endif %}">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-                    Conversión
-                </a></li>
+                <li class="navbar__dropdown">
+                    <button class="navbar__link navbar__link--dropdown {% if active_page == 'conversion' or active_page == 'romanos' %}navbar__link--active{% endif %}" aria-haspopup="true" aria-expanded="false">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                        Conversión
+                        <svg class="navbar__dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                    <ul class="navbar__dropdown-menu">
+                        <li><a href="{{ url_for('page_conversion') }}" class="navbar__dropdown-link {% if active_page == 'conversion' %}navbar__dropdown-link--active{% endif %}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                            Sistemas Numéricos (Bases)
+                        </a></li>
+                        <li><a href="{{ url_for('page_romanos') }}" class="navbar__dropdown-link {% if active_page == 'romanos' %}navbar__dropdown-link--active{% endif %}">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>
+                            Números Romanos
+                        </a></li>
+                    </ul>
+                </li>
                 <li><a href="{{ url_for('page_vectores') }}" class="navbar__link {% if active_page == 'vectores' %}navbar__link--active{% endif %}">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     Vectores
