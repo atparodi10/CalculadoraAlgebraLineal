@@ -1,9 +1,9 @@
 // SISTEMAS DE ECUACIONES — Lineal Tanix
-// Dedicated JS for the equation systems page.
-// FIX: The old version queried ALL .equation-input on the page, including
-// hidden modules. Now each module has its own page and JS file.
-// FIX: Some keyboards/autocorrect replace 'x' with '×' (multiplication sign).
-// We normalize that before parsing.
+// JS dedicado a la página de sistemas de ecuaciones.
+// CORRECCIÓN: La versión anterior consultaba TODOS los .equation-input de la página,
+// incluyendo módulos ocultos. Ahora cada módulo tiene su propia página y archivo JS.
+// CORRECCIÓN: Algunos teclados/autocorrectores reemplazan 'x' por '×' (signo de multiplicación).
+// Se normaliza antes de parsear.
 
 document.addEventListener('DOMContentLoaded', () => {
     const btnGenerate = document.getElementById('btn-generate');

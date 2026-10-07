@@ -1,10 +1,10 @@
-// DARK MODE TOGGLE — Lineal Tanix
-// Persists the user's theme preference in localStorage.
+// ALTERNANCIA DE TEMA CLARO/OSCURO — Lineal Tanix
+// Persiste la preferencia de tema del usuario en localStorage.
 (function() {
     const toggle = document.getElementById('theme-toggle');
     const html = document.documentElement;
 
-    // Apply saved preference or system default
+    // Aplicar la preferencia guardada o el valor predeterminado del sistema
     const saved = localStorage.getItem('lineal-tanix-theme');
     if (saved) {
         html.setAttribute('data-theme', saved);
@@ -18,7 +18,7 @@
         html.setAttribute('data-theme', next);
         localStorage.setItem('lineal-tanix-theme', next);
 
-        // Smooth animation on toggle button
+        // Animación suave del botón de alternancia
         toggle.style.transform = 'rotate(360deg) scale(1.1)';
         setTimeout(() => {
             toggle.style.transform = '';

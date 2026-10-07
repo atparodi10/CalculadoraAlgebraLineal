@@ -150,10 +150,11 @@ def api_matrices():
     Paso 2: Desempaqueta las matrices de origen e invoca la lógica de cálculo puro.
     Paso 3: Atrapa el resultado, los historiales visuales de matriz (pasos) y el desglose de celdas (pasos_eq).
     Paso 4: Retorna la carga JSON formateada para el renderizado detallado en JavaScript.
+    Para la inversa, incluye además tiempo real medido y datos de verificación A×A⁻¹.
     """
     datos = request.json
     operacion = datos.get('operacion')
-    
+
     if operacion == 'suma':
         res, pasos, pasos_eq, err = suma_matrices(datos.get('A', []), datos.get('B', []))
     elif operacion == 'resta':
@@ -163,16 +164,45 @@ def api_matrices():
     elif operacion == 'escalar':
         res, pasos, pasos_eq, err = mult_escalar_matriz(datos.get('c'), datos.get('A', []))
     elif operacion == 'inversa':
-        res, pasos, pasos_eq, err = inversa_matriz(datos.get('A', []))
+        # inversa_matriz devuelve 6 valores: resultado, pasos, ecuaciones, error, tiempo, verificación
+        resultado_inv = inversa_matriz(datos.get('A', []))
+        res = resultado_inv[0]
+        pasos = resultado_inv[1]
+        pasos_eq = resultado_inv[2]
+        err = resultado_inv[3]
+        tiempo_info = resultado_inv[4] if len(resultado_inv) > 4 else None
+        verificacion_datos = resultado_inv[5] if len(resultado_inv) > 5 else None
+
+        if err:
+            # Ante singularidad, devolver los pasos alcanzados y el tiempo si existe
+            respuesta_error = {"error": err}
+            if pasos:
+                respuesta_error["pasos"] = pasos
+            if pasos_eq:
+                respuesta_error["pasos_ecuaciones"] = pasos_eq
+            if tiempo_info:
+                respuesta_error["tiempo_info"] = tiempo_info
+            return jsonify(respuesta_error), 400
+
+        respuesta = {
+            "resultado": res,
+            "pasos": pasos,
+            "pasos_ecuaciones": pasos_eq
+        }
+        if tiempo_info:
+            respuesta["tiempo_info"] = tiempo_info
+        if verificacion_datos:
+            respuesta["verificacion_visual"] = verificacion_datos
+        return jsonify(respuesta)
     else:
         return jsonify({"error": "Operación no soportada"}), 400
 
     if err:
         return jsonify({"error": err}), 400
-        
+
     return jsonify({
         "resultado": res,
-        "pasos": pasos,               
-        "pasos_ecuaciones": pasos_eq  
+        "pasos": pasos,
+        "pasos_ecuaciones": pasos_eq
     })
-    
+

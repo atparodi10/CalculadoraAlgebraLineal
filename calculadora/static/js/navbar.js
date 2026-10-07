@@ -1,24 +1,24 @@
-// NAVBAR — Lineal Tanix
-// Handles mobile hamburger toggle, scroll effects, and dropdown menus.
+// BARRA DE NAVEGACIÓN — Lineal Tanix
+// Controla el menú hamburguesa móvil, efectos de scroll y menús desplegables.
 (function() {
     const navbarToggle = document.getElementById('navbar-toggle');
     const navbarMenu = document.getElementById('navbar-menu');
     const navbar = document.getElementById('main-navbar');
 
-    // Mobile menu toggle
+    // Alternancia del menú móvil
     navbarToggle.addEventListener('click', () => {
         navbarToggle.classList.toggle('active');
         navbarMenu.classList.toggle('active');
     });
 
-    // Dropdown toggle (for mobile — on desktop, CSS :hover handles it)
+    // Alternancia de desplegable (para móvil; en escritorio CSS :hover lo maneja)
     const dropdownBtns = navbar.querySelectorAll('.navbar__link--dropdown');
     dropdownBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
             const parent = btn.closest('.navbar__dropdown');
-            // Close other dropdowns
+            // Cerrar otros desplegables
             navbar.querySelectorAll('.navbar__dropdown.active').forEach(dd => {
                 if (dd !== parent) dd.classList.remove('active');
             });
@@ -26,7 +26,7 @@
         });
     });
 
-    // Close mobile menu when clicking a regular nav link
+    // Cerrar menú móvil al hacer clic en un enlace regular de navegación
     navbarMenu.querySelectorAll('.navbar__link:not(.navbar__link--dropdown)').forEach(link => {
         link.addEventListener('click', () => {
             navbarToggle.classList.remove('active');
@@ -34,7 +34,7 @@
         });
     });
 
-    // Close mobile menu when clicking a dropdown sub-link
+    // Cerrar menú móvil al hacer clic en un subenlace desplegable
     navbarMenu.querySelectorAll('.navbar__dropdown-link').forEach(link => {
         link.addEventListener('click', () => {
             navbarToggle.classList.remove('active');
@@ -42,7 +42,7 @@
         });
     });
 
-    // Close mobile menu and dropdowns when clicking outside
+    // Cerrar menú móvil y desplegables al hacer clic fuera
     document.addEventListener('click', (e) => {
         if (!navbar.contains(e.target)) {
             navbarToggle.classList.remove('active');
@@ -53,7 +53,7 @@
         }
     });
 
-    // Subtle shadow on scroll
+    // Sombra sutil al hacer scroll
     let lastScroll = 0;
     window.addEventListener('scroll', () => {
         const scrollY = window.scrollY;

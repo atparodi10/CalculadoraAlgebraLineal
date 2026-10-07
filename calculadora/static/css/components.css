@@ -1,9 +1,9 @@
 /*
- * COMPONENT STYLES — Lineal Tanix
- * Shared components used across multiple module pages.
+ * ESTILOS DE COMPONENTES — Lineal Tanix
+ * Componentes compartidos entre múltiples páginas de módulos.
  */
 
-/* Matrices input grid (shared by matrices page) */
+/* Grilla de entrada de matrices (usada por la página de matrices) */
 .matrices-input-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -11,7 +11,7 @@
     margin-bottom: 1.5rem;
 }
 
-/* Results steps list */
+/* Lista de pasos de resultados */
 .results__step h3 {
     color: var(--color-primary);
     font-family: 'Outfit', 'Inter', sans-serif;
@@ -39,7 +39,7 @@
     color: var(--text-primary);
 }
 
-/* Loading spinner */
+/* Indicador de carga (spinner) */
 .spinner {
     display: inline-block;
     width: 20px;
@@ -54,7 +54,7 @@
     to { transform: rotate(360deg); }
 }
 
-/* Conversion result step detail */
+/* Detalle de paso de conversión */
 .conversion-step {
     text-align: left;
 }
@@ -76,3 +76,4 @@
     border-radius: 6px;
     border: 1px solid var(--border-color);
 }
+

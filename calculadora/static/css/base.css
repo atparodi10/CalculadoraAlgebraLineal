@@ -1,12 +1,12 @@
 /*
- * BASE STYLES — Lineal Tanix
- * Design system: tokens, reset, theme variables, and shared utilities.
+ * ESTILOS BASE — Lineal Tanix
+ * Sistema de diseño: tokens, reset, variables de tema y utilidades compartidas.
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 /* =========================================
-   LIGHT THEME (DEFAULT)
+   TEMA CLARO (POR DEFECTO)
    ========================================= */
 :root,
 [data-theme="light"] {
@@ -51,7 +51,7 @@
 }
 
 /* =========================================
-   DARK THEME
+   TEMA OSCURO
    ========================================= */
 [data-theme="dark"] {
     --color-primary: #818cf8;
@@ -86,7 +86,7 @@
 }
 
 /* =========================================
-   RESET
+   REINICIO (RESET)
    ========================================= */
 *, *::before, *::after {
     margin: 0;
@@ -130,7 +130,7 @@ button {
 }
 
 /* =========================================
-   SCROLLBAR
+   BARRA DE DESPLAZAMIENTO
    ========================================= */
 ::-webkit-scrollbar {
     width: 8px;
@@ -148,7 +148,7 @@ button {
 }
 
 /* =========================================
-   MAIN CONTENT
+   CONTENIDO PRINCIPAL
    ========================================= */
 .main-content {
     max-width: 960px;
@@ -158,7 +158,7 @@ button {
 }
 
 /* =========================================
-   PAGE HEADER
+   ENCABEZADO DE PÁGINA
    ========================================= */
 .page-header {
     text-align: center;
@@ -185,7 +185,7 @@ button {
 }
 
 /* =========================================
-   CARD
+   TARJETA
    ========================================= */
 .card {
     background: var(--bg-card);
@@ -225,7 +225,7 @@ button {
 }
 
 /* =========================================
-   FORMS
+   FORMULARIOS
    ========================================= */
 .form-grid {
     display: grid;
@@ -328,7 +328,7 @@ button {
 }
 
 /* =========================================
-   BUTTONS
+   BOTONES
    ========================================= */
 .btn {
     display: inline-flex;
@@ -403,7 +403,7 @@ button {
 }
 
 /* =========================================
-   ALERT
+   ALERTAS
    ========================================= */
 .alert {
     padding: 1rem 1.25rem;
@@ -455,7 +455,7 @@ button {
 }
 
 /* =========================================
-   INFO BOX
+   CUADRO INFORMATIVO
    ========================================= */
 .info-box {
     display: flex;
@@ -491,7 +491,7 @@ button {
 }
 
 /* =========================================
-   EQUATION LIST
+   LISTA DE ECUACIONES
    ========================================= */
 .equation-list {
     display: flex;
@@ -506,7 +506,7 @@ button {
 }
 
 /* =========================================
-   RESULTS
+   RESULTADOS
    ========================================= */
 .results__step {
     background: var(--bg-card);
@@ -536,7 +536,7 @@ button {
 }
 
 /* =========================================
-   MATRIX DISPLAY
+   VISUALIZACIÓN DE MATRICES
    ========================================= */
 .matrix {
     display: inline-block;
@@ -589,14 +589,14 @@ button {
 }
 
 /* =========================================
-   HIDDEN
+   OCULTO
    ========================================= */
 .hidden {
     display: none !important;
 }
 
 /* =========================================
-   FOOTER
+   PIE DE PÁGINA
    ========================================= */
 .footer {
     background: var(--bg-card);
@@ -629,7 +629,7 @@ button {
 }
 
 /* =========================================
-   ANIMATIONS
+   ANIMACIONES
    ========================================= */
 @keyframes fadeSlideUp {
     from { opacity: 0; transform: translateY(20px); }
@@ -652,7 +652,7 @@ button {
 }
 
 /* =========================================
-   RESPONSIVE
+   DISEÑO ADAPTABLE (RESPONSIVE)
    ========================================= */
 @media (max-width: 768px) {
     .main-content {
