@@ -25,6 +25,9 @@ from .metodos.operaciones_matrices import suma_matrices, resta_matrices, multipl
 # Importación del motor de Matriz Inversa por Gauss-Jordan
 from .metodos.inversa import inversa_matriz
 
+# Importación del motor de Determinantes (Cofactores, Sarrus, LU)
+from .metodos.determinantes import calcular_determinante
+
 
 # =========================================
 # RUTAS DE PÁGINAS (cada módulo tiene su propia página)
@@ -193,6 +196,34 @@ def api_matrices():
             respuesta["tiempo_info"] = tiempo_info
         if verificacion_datos:
             respuesta["verificacion_visual"] = verificacion_datos
+        return jsonify(respuesta)
+    elif operacion == 'determinante':
+        metodo_det = datos.get('metodo', 'auto')
+        det, pasos, pasos_eq, err, tiempo_info, recomendacion = calcular_determinante(
+            datos.get('A', []), metodo_det
+        )
+
+        if err:
+            respuesta_error = {"error": err}
+            if pasos:
+                respuesta_error["pasos"] = pasos
+            if pasos_eq:
+                respuesta_error["pasos_ecuaciones"] = pasos_eq
+            if tiempo_info:
+                respuesta_error["tiempo_info"] = tiempo_info
+            if recomendacion:
+                respuesta_error["recomendacion"] = recomendacion
+            return jsonify(respuesta_error), 400
+
+        respuesta = {
+            "resultado": det,
+            "pasos": pasos,
+            "pasos_ecuaciones": pasos_eq
+        }
+        if tiempo_info:
+            respuesta["tiempo_info"] = tiempo_info
+        if recomendacion:
+            respuesta["recomendacion"] = recomendacion
         return jsonify(respuesta)
     else:
         return jsonify({"error": "Operación no soportada"}), 400

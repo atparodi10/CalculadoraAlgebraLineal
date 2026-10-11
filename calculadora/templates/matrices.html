@@ -8,7 +8,7 @@
 {% block content %}
 <div class="page-header">
     <h1 class="page-header__title">Operaciones Matriciales</h1>
-    <p class="page-header__subtitle">Suma, resta, multiplicación, escalar e inversa con desglose completo</p>
+    <p class="page-header__subtitle">Suma, resta, multiplicación, escalar, inversa y determinantes con desglose completo</p>
 </div>
 
 <div class="card">
@@ -52,6 +52,37 @@
         <button class="btn btn--primary" id="btn-mat-inversa">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V4"/><path d="M5 11l7-7 7 7"/></svg>
             A⁻¹
+        </button>
+        <button class="btn btn--primary" id="btn-mat-determinante">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="3" x2="3" y2="21"/><line x1="21" y1="3" x2="21" y2="21"/></svg>
+            |A|
+        </button>
+    </div>
+
+    <!-- Panel selector de método para determinantes -->
+    <div id="det-method-panel" class="det-method-panel hidden">
+        <div class="det-method-panel__header">
+            <h3 class="det-method-panel__title">Método de cálculo</h3>
+        </div>
+        <div class="det-method-panel__options">
+            <label class="det-method-option">
+                <input type="radio" name="det-metodo" value="cofactores" id="det-met-cofactores">
+                <span class="det-method-option__label">Cofactores (Laplace)</span>
+            </label>
+            <label class="det-method-option">
+                <input type="radio" name="det-metodo" value="sarrus" id="det-met-sarrus">
+                <span class="det-method-option__label">Regla de Sarrus</span>
+                <span class="det-method-option__badge">solo 3×3</span>
+            </label>
+            <label class="det-method-option">
+                <input type="radio" name="det-metodo" value="lu" id="det-met-lu">
+                <span class="det-method-option__label">Factorización LU</span>
+            </label>
+        </div>
+        <div id="det-recomendacion" class="det-recomendacion hidden"></div>
+        <button class="btn btn--primary" id="btn-det-calcular" style="margin-top: 0.75rem; width: 100%;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            Calcular Determinante
         </button>
     </div>
 </div>

@@ -1,1 +1,638 @@
-/* Matrices page — no extra styles needed beyond base */
+/* Matrices page — determinant method selector panel */
+
+/* --- Panel de selección de método para determinantes --- */
+.det-method-panel {
+    margin-top: 1rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-card-alt, var(--bg-card));
+    animation: detPanelIn 0.25s ease-out;
+}
+
+@keyframes detPanelIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.det-method-panel__header {
+    margin-bottom: 0.75rem;
+}
+
+.det-method-panel__title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin: 0;
+}
+
+.det-method-panel__options {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.det-method-option {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    font-size: 0.9rem;
+    user-select: none;
+}
+
+.det-method-option:hover {
+    border-color: var(--color-primary);
+    background: rgba(99, 102, 241, 0.06);
+}
+
+.det-method-option:has(input:checked) {
+    border-color: var(--color-primary);
+    background: rgba(99, 102, 241, 0.1);
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+.det-method-option input[type="radio"] {
+    accent-color: var(--color-primary);
+    margin: 0;
+}
+
+.det-method-option__label {
+    font-weight: 500;
+}
+
+.det-method-option__badge {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    background: var(--color-primary);
+    color: white;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.det-method-option:has(input:disabled) {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.det-method-option:has(input:disabled):hover {
+    border-color: var(--border-color);
+    background: transparent;
+}
+
+/* --- Recomendación automática --- */
+.det-recomendacion {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.det-recomendacion__titulo {
+    font-weight: 700;
+    color: var(--color-success, #10b981);
+    margin-bottom: 0.25rem;
+}
+
+.det-recomendacion__texto {
+    color: var(--text-muted);
+}
+
+/* --- Resultado escalar destacado --- */
+.det-resultado-final {
+    text-align: center;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.det-resultado-final__label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+}
+
+.det-resultado-final__valor {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-color);
+    font-family: 'Fira Code', monospace;
+}
+
+.det-resultado-final__metodo {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.4rem;
+}
+
+/* --- Sarrus diagonales visuales --- */
+.sarrus-visual {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.sarrus-grupo {
+    display: inline-block;
+    margin: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    vertical-align: top;
+}
+
+.sarrus-grupo--pos {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.sarrus-grupo--neg {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.sarrus-grupo__titulo {
+    font-weight: 700;
+    margin-bottom: 0.4rem;
+}
+
+.sarrus-grupo--pos .sarrus-grupo__titulo { color: var(--color-success, #10b981); }
+.sarrus-grupo--neg .sarrus-grupo__titulo { color: var(--color-danger, #ef4444); }
+
+.sarrus-producto {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.85rem;
+    margin: 0.2rem 0;
+}
+
+/* --- LU matrices lado a lado --- */
+.lu-matrices-grid {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 1rem 0;
+}
+
+.lu-matrix-block {
+    text-align: center;
+}
+
+.lu-matrix-block__label {
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 0.4rem;
+    font-size: 0.9rem;
+}
+
+/* =====================================================================
+   SARRUS — Visualización con flechas SVG sobre matriz expandida
+   ===================================================================== */
+
+.sarrus-container {
+    position: relative;
+    margin: 1.5rem auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+/* Cuadrícula expandida de Sarrus (5 filas × 3 columnas) */
+.sarrus-grid-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+.sarrus-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-radius: 8px;
+    overflow: visible;
+    position: relative;
+    z-index: 1;
+}
+
+.sarrus-grid__cell {
+    min-width: 60px;
+    padding: 0.55rem 1rem;
+    text-align: center;
+    font-family: 'Fira Code', monospace;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-color, #1e293b);
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    transition: background 0.3s, color 0.3s, transform 0.3s;
+    position: relative;
+    z-index: 2;
+}
+
+/* Filas duplicadas (filas 4 y 5) con opacidad reducida */
+.sarrus-grid__cell--ghost {
+    opacity: 0.5;
+    background: rgba(99, 102, 241, 0.04);
+    border-style: dashed;
+}
+
+/* Celdas resaltadas al pasar la diagonal */
+.sarrus-grid__cell--highlight-pos {
+    background: rgba(16, 185, 129, 0.15) !important;
+    color: var(--color-success, #10b981) !important;
+    font-weight: 800;
+    transform: scale(1.05);
+    z-index: 3;
+}
+
+.sarrus-grid__cell--highlight-neg {
+    background: rgba(239, 68, 68, 0.15) !important;
+    color: var(--color-danger, #ef4444) !important;
+    font-weight: 800;
+    transform: scale(1.05);
+    z-index: 3;
+}
+
+/* SVG superpuesto para flechas */
+.sarrus-svg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 4;
+}
+
+.sarrus-svg-overlay line,
+.sarrus-svg-overlay path {
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+/* Separador visual entre filas originales y duplicadas */
+.sarrus-separator {
+    grid-column: 1 / -1;
+    height: 2px;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--color-primary, #6366f1) 0px,
+        var(--color-primary, #6366f1) 6px,
+        transparent 6px,
+        transparent 12px
+    );
+    opacity: 0.5;
+}
+
+/* Ecuación final de Sarrus */
+.sarrus-equation {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.95rem;
+    padding: 1rem 1.5rem;
+    background: var(--bg-card-alt, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    text-align: center;
+    line-height: 1.8;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.sarrus-equation__pos {
+    color: var(--color-success, #10b981);
+    font-weight: 700;
+}
+
+.sarrus-equation__neg {
+    color: var(--color-danger, #ef4444);
+    font-weight: 700;
+}
+
+/* Animación de las flechas de Sarrus */
+@keyframes sarrusArrowDraw {
+    from { stroke-dashoffset: 300; }
+    to   { stroke-dashoffset: 0; }
+}
+
+.sarrus-arrow-animated {
+    stroke-dasharray: 300;
+    animation: sarrusArrowDraw 0.8s ease-out forwards;
+}
+
+.sarrus-arrow-animated:nth-child(2) { animation-delay: 0.3s; stroke-dashoffset: 300; }
+.sarrus-arrow-animated:nth-child(3) { animation-delay: 0.6s; stroke-dashoffset: 300; }
+.sarrus-arrow-animated:nth-child(4) { animation-delay: 1.0s; stroke-dashoffset: 300; }
+.sarrus-arrow-animated:nth-child(5) { animation-delay: 1.3s; stroke-dashoffset: 300; }
+.sarrus-arrow-animated:nth-child(6) { animation-delay: 1.6s; stroke-dashoffset: 300; }
+
+
+/* =====================================================================
+   COFACTORES — Tachado animado y submatriz lateral
+   ===================================================================== */
+
+.cofactor-step-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0.75rem 0;
+    animation: cofactorStepIn 0.35s ease-out;
+}
+
+@keyframes cofactorStepIn {
+    from { opacity: 0; transform: translateX(-12px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* Matriz con fila/columna tachada */
+.cofactor-matrix-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+.cofactor-grid {
+    display: inline-grid;
+    gap: 0;
+    border-radius: 6px;
+    overflow: visible;
+    position: relative;
+}
+
+.cofactor-grid__cell {
+    min-width: 50px;
+    padding: 0.45rem 0.8rem;
+    text-align: center;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-color, #1e293b);
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    position: relative;
+    transition: all 0.4s ease;
+}
+
+/* Pivote resaltado */
+.cofactor-grid__cell--pivote {
+    background: rgba(99, 102, 241, 0.2) !important;
+    color: var(--color-primary, #6366f1) !important;
+    font-weight: 800;
+    font-size: 1.05rem;
+    box-shadow: 0 0 0 2px var(--color-primary, #6366f1);
+    z-index: 2;
+    border-radius: 4px;
+}
+
+/* Celdas de fila tachada */
+.cofactor-grid__cell--row-struck {
+    opacity: 0.35;
+    text-decoration: line-through;
+    text-decoration-color: var(--color-danger, #ef4444);
+    text-decoration-thickness: 2px;
+    background: rgba(239, 68, 68, 0.06);
+}
+
+/* Celdas de columna tachada */
+.cofactor-grid__cell--col-struck {
+    opacity: 0.35;
+    text-decoration: line-through;
+    text-decoration-color: var(--color-danger, #ef4444);
+    text-decoration-thickness: 2px;
+    background: rgba(239, 68, 68, 0.06);
+}
+
+/* Animación del tachado */
+@keyframes strikeThrough {
+    0%   { text-decoration-color: transparent; opacity: 1; }
+    50%  { text-decoration-color: var(--color-danger, #ef4444); opacity: 0.6; }
+    100% { text-decoration-color: var(--color-danger, #ef4444); opacity: 0.35; }
+}
+
+.cofactor-grid__cell--animate-strike {
+    animation: strikeThrough 0.6s ease-out forwards;
+}
+
+/* Flecha entre la matriz tachada y la submatriz */
+.cofactor-arrow {
+    display: flex;
+    align-items: center;
+    font-size: 1.8rem;
+    color: var(--text-muted, #94a3b8);
+    padding: 0 0.25rem;
+    align-self: center;
+}
+
+/* Submatriz (menor) */
+.cofactor-submatrix-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.cofactor-submatrix-label {
+    font-size: 0.8rem;
+    color: var(--text-muted, #94a3b8);
+    font-weight: 600;
+}
+
+/* Ecuación del cofactor */
+.cofactor-equation {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.88rem;
+    padding: 0.6rem 1rem;
+    background: var(--bg-card-alt, #f8fafc);
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 6px;
+    text-align: center;
+    width: 100%;
+    margin-top: 0.25rem;
+}
+
+.cofactor-equation__signo-pos { color: var(--color-success, #10b981); font-weight: 700; }
+.cofactor-equation__signo-neg { color: var(--color-danger, #ef4444); font-weight: 700; }
+.cofactor-equation__elem { color: var(--color-primary, #6366f1); font-weight: 700; }
+.cofactor-equation__det { color: var(--text-muted, #94a3b8); }
+.cofactor-equation__result { font-weight: 800; color: var(--text-color, #1e293b); }
+
+
+/* =====================================================================
+   LU — Llenado progresivo de matrices L y U
+   ===================================================================== */
+
+.lu-progress-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.lu-dual-grid {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.lu-matrix-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.lu-matrix-section__label {
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 0.25rem 0.8rem;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+}
+
+.lu-matrix-section__label--L {
+    color: var(--color-primary, #6366f1);
+    background: rgba(99, 102, 241, 0.1);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.lu-matrix-section__label--U {
+    color: var(--color-success, #10b981);
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.lu-matrix-section__label--P {
+    color: var(--text-muted, #94a3b8);
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.lu-grid {
+    display: inline-grid;
+    gap: 0;
+    border-radius: 6px;
+}
+
+.lu-grid__cell {
+    min-width: 48px;
+    padding: 0.4rem 0.7rem;
+    text-align: center;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color, #1e293b);
+    background: var(--bg-card, #fff);
+    border: 1px solid var(--border-color, #e2e8f0);
+    transition: all 0.4s ease;
+}
+
+/* Celda rellenada recientemente en L */
+.lu-grid__cell--new-L {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--color-primary, #6366f1);
+    font-weight: 700;
+    animation: luCellPulse 0.6s ease-out;
+}
+
+/* Celda rellenada recientemente en U */
+.lu-grid__cell--new-U {
+    background: rgba(16, 185, 129, 0.15);
+    color: var(--color-success, #10b981);
+    font-weight: 700;
+    animation: luCellPulse 0.6s ease-out;
+}
+
+/* Diagonal de L (siempre 1) */
+.lu-grid__cell--diag {
+    font-weight: 700;
+    color: var(--color-primary, #6366f1);
+}
+
+/* Celda cero (triangular) */
+.lu-grid__cell--zero {
+    color: var(--text-muted, #94a3b8);
+    opacity: 0.6;
+}
+
+@keyframes luCellPulse {
+    0%   { transform: scale(1.15); box-shadow: 0 0 8px rgba(99, 102, 241, 0.4); }
+    100% { transform: scale(1); box-shadow: none; }
+}
+
+/* Ecuación diagonal de LU */
+.lu-diag-equation {
+    font-family: 'Fira Code', monospace;
+    font-size: 0.9rem;
+    padding: 0.75rem 1.25rem;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), rgba(16, 185, 129, 0.06));
+    border: 1px solid var(--border-color, #e2e8f0);
+    border-radius: 8px;
+    text-align: center;
+    line-height: 1.8;
+}
+
+/* Intercambio de filas resaltado */
+.lu-swap-badge {
+    display: inline-block;
+    padding: 0.3rem 0.8rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: rgba(251, 191, 36, 0.15);
+    color: #d97706;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    margin-bottom: 0.5rem;
+}
+
+/* =====================================================================
+   Responsive para pantallas pequeñas
+   ===================================================================== */
+
+@media (max-width: 640px) {
+    .cofactor-step-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .cofactor-arrow {
+        transform: rotate(90deg);
+        padding: 0.25rem 0;
+    }
+
+    .lu-dual-grid {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .sarrus-grid__cell {
+        min-width: 45px;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.85rem;
+    }
+
+    .cofactor-grid__cell {
+        min-width: 40px;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .lu-grid__cell {
+        min-width: 38px;
+        padding: 0.3rem 0.5rem;
+        font-size: 0.8rem;
+    }
+}

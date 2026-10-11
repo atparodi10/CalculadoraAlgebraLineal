@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const nombreOp = {
                 'suma': 'Suma', 'resta': 'Resta', 'multiplicacion': 'Multiplicación',
-                'escalar': 'Escalar', 'inversa': 'Inversa'
+                'escalar': 'Escalar', 'inversa': 'Inversa', 'determinante': 'Determinante'
             }[operacion] || operacion;
 
             const soportado = celdas <= LIMITE_CELDAS;
@@ -549,7 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
         eqDiv.style.textAlign = 'left';
         let eqHTML = '<h3>Desglose Algebraico:</h3><ul>';
         pasosEcuaciones.forEach(line => {
-            if (line.includes("Fila") || line.includes("x") || line.includes("C[") || line.includes("Sistema") || line.includes("Componente") || line.includes("F") || line.includes("→") || line.includes("✓") || line.includes("⚠") || line.includes("A⁻¹") || line.includes("A×A⁻¹") || line.includes("tolerancia")) {
+            if (line.includes("Fila") || line.includes("x") || line.includes("C[") || line.includes("Sistema") || line.includes("Componente") || line.includes("F") || line.includes("→") || line.includes("✓") || line.includes("⚠") || line.includes("A⁻¹") || line.includes("A×A⁻¹") || line.includes("tolerancia") || line.includes("det") || line.includes("Diagonal") || line.includes("Cofactor") || line.includes("Menor") || line.includes("Σ") || line.includes("∏") || line.includes("diag") || line.includes("Intercambio") || line.includes("Expandiendo") || line.includes("signo") || line.includes("Sarrus")) {
                 eqHTML += `<li style="font-family: monospace; font-size: 1rem; margin-bottom: 5px;">${line}</li>`;
             } else {
                 eqHTML += `<p><strong>${line}</strong></p>`;
@@ -571,8 +571,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (A === null) return showMsg('mat-alert', "Error de formato en Matriz A: Valores irregulares, no numéricos o filas de distinta longitud.");
         if (A.length === 0) return showMsg('mat-alert', "Datos incompletos: Matriz A está vacía.");
 
-        // Para operaciones que no necesitan B (escalar, inversa)
-        if (operacion !== 'escalar' && operacion !== 'inversa') {
+        // Para operaciones que no necesitan B (escalar, inversa, determinante)
+        if (operacion !== 'escalar' && operacion !== 'inversa' && operacion !== 'determinante') {
             if (B === null) return showMsg('mat-alert', "Error de formato en Matriz B: Valores irregulares, no numéricos o filas de distinta longitud.");
             if (B.length === 0) return showMsg('mat-alert', "Datos incompletos: Matriz B está vacía.");
         }
@@ -617,9 +617,789 @@ document.addEventListener('DOMContentLoaded', () => {
             return showMsg('mat-alert', `La matriz debe ser cuadrada para calcular su inversa. Dimensiones: ${A.length}×${A[0].length}.`);
         }
 
+        // Ocultar panel de determinante si está visible
+        document.getElementById('det-method-panel').classList.add('hidden');
+
         const proceder = await mostrarDialogoRendimiento(A.length, A[0].length, 'inversa');
         if (!proceder) return;
 
         fetchOperacion('/api/matrices', { operacion: 'inversa', A }, 'mat-alert', 'mat-results');
     });
+
+    // =========================================
+    // DETERMINANTES
+    // =========================================
+
+    const detPanel = document.getElementById('det-method-panel');
+    const detRecomDiv = document.getElementById('det-recomendacion');
+
+    /**
+     * Actualiza la disponibilidad de los métodos según la dimensión de la matriz.
+     * Sarrus solo para 3×3; cofactores limitado a 10×10.
+     */
+    function actualizarMetodosDisponibles(n) {
+        const radCof = document.getElementById('det-met-cofactores');
+        const radSar = document.getElementById('det-met-sarrus');
+        const radLU  = document.getElementById('det-met-lu');
+
+        // Cofactores: habilitado si n <= 10
+        radCof.disabled = n > 10;
+        // Sarrus: solo 3×3
+        radSar.disabled = n !== 3;
+        // LU: siempre disponible
+        radLU.disabled = false;
+
+        // Si el método seleccionado ahora está deshabilitado, deseleccionar
+        if (radCof.checked && radCof.disabled) radCof.checked = false;
+        if (radSar.checked && radSar.disabled) radSar.checked = false;
+    }
+
+    /**
+     * Muestra la recomendación del servidor en el panel.
+     */
+    function mostrarRecomendacion(recomendacion) {
+        if (!recomendacion) {
+            detRecomDiv.classList.add('hidden');
+            return;
+        }
+
+        const nombreMetodo = {
+            'cofactores': 'Cofactores (Laplace)',
+            'sarrus': 'Regla de Sarrus',
+            'lu': 'Factorización LU'
+        }[recomendacion.metodo_recomendado] || recomendacion.metodo_recomendado;
+
+        detRecomDiv.innerHTML = `
+            <div class="det-recomendacion__titulo">💡 Recomendado: ${nombreMetodo}</div>
+            <div class="det-recomendacion__texto">${recomendacion.razon}</div>
+        `;
+        detRecomDiv.classList.remove('hidden');
+
+        // Preseleccionar el método recomendado si ninguno está seleccionado
+        const seleccionado = document.querySelector('input[name="det-metodo"]:checked');
+        if (!seleccionado) {
+            const radio = document.getElementById('det-met-' + recomendacion.metodo_recomendado);
+            if (radio && !radio.disabled) {
+                radio.checked = true;
+            }
+        }
+    }
+
+    /**
+     * Renderiza el resultado escalar del determinante de manera destacada.
+     */
+    function renderDetResultado(det, metodo) {
+        const nombreMetodo = {
+            'cofactores': 'Cofactores (Laplace)',
+            'sarrus': 'Regla de Sarrus',
+            'lu': 'Factorización LU'
+        }[metodo] || metodo;
+
+        return `
+            <div class="det-resultado-final">
+                <div class="det-resultado-final__label">Determinante de A</div>
+                <div class="det-resultado-final__valor">${fmtNum(det)}</div>
+                <div class="det-resultado-final__metodo">Calculado por ${nombreMetodo}</div>
+            </div>
+        `;
+    }
+
+    /**
+     * Renderiza la visualización de Sarrus con diagonales positivas y negativas.
+     * Versión simple (fallback para datos sin la estructura expandida).
+     */
+    function renderSarrusVisual(sarrusInfo) {
+        if (!sarrusInfo) return '';
+
+        let html = '<div class="sarrus-visual">';
+
+        // Grupo positivo
+        html += '<div class="sarrus-grupo sarrus-grupo--pos">';
+        html += '<div class="sarrus-grupo__titulo">Diagonales Positivas (+)</div>';
+        sarrusInfo.positivas.forEach((d, i) => {
+            html += `<div class="sarrus-producto">D${i+1}: ${fmtNum(d.producto)}</div>`;
+        });
+        html += `<div class="sarrus-producto" style="font-weight:700; margin-top:0.3rem; border-top:1px solid rgba(16,185,129,0.3); padding-top:0.3rem;">Σ = ${fmtNum(sarrusInfo.suma_pos)}</div>`;
+        html += '</div>';
+
+        // Grupo negativo
+        html += '<div class="sarrus-grupo sarrus-grupo--neg">';
+        html += '<div class="sarrus-grupo__titulo">Diagonales Negativas (−)</div>';
+        sarrusInfo.negativas.forEach((d, i) => {
+            html += `<div class="sarrus-producto">D${i+1}: ${fmtNum(d.producto)}</div>`;
+        });
+        html += `<div class="sarrus-producto" style="font-weight:700; margin-top:0.3rem; border-top:1px solid rgba(239,68,68,0.3); padding-top:0.3rem;">Σ = ${fmtNum(sarrusInfo.suma_neg)}</div>`;
+        html += '</div>';
+
+        html += `<div style="margin-top:0.75rem; font-weight:700; font-size:1.1rem;">det(A) = ${fmtNum(sarrusInfo.suma_pos)} − ${fmtNum(sarrusInfo.suma_neg)} = ${fmtNum(sarrusInfo.determinante)}</div>`;
+        html += '</div>';
+        return html;
+    }
+
+    // =====================================================================
+    // SARRUS — Renderizado con cuadrícula expandida + flechas SVG
+    // =====================================================================
+
+    /**
+     * Renderiza la visualización completa de Sarrus:
+     * - Cuadrícula 5×3 (3 filas originales + 2 filas duplicadas con opacidad)
+     * - SVG superpuesto con flechas diagonales de colores
+     * - Ecuación final explícita
+     */
+    function renderSarrusExpandida(paso) {
+        const { matriz, filas_expandidas, diagonales_principales, diagonales_secundarias,
+                productos_pos, productos_neg, suma_pos, suma_neg, determinante, ecuacion_final } = paso;
+
+        // Construir las 5 filas de datos
+        const filas5 = [
+            matriz[0], matriz[1], matriz[2],
+            filas_expandidas[0], filas_expandidas[1]
+        ];
+
+        const container = document.createElement('div');
+        container.className = 'sarrus-container';
+
+        // --- Cuadrícula con SVG ---
+        const gridWrap = document.createElement('div');
+        gridWrap.className = 'sarrus-grid-wrap';
+
+        const grid = document.createElement('div');
+        grid.className = 'sarrus-grid';
+        grid.style.gridTemplateColumns = 'repeat(3, 1fr)';
+
+        // Crear celdas y almacenar referencias
+        const celdas = [];
+        for (let i = 0; i < 5; i++) {
+            const filaCeldas = [];
+            for (let j = 0; j < 3; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'sarrus-grid__cell';
+                if (i >= 3) cell.classList.add('sarrus-grid__cell--ghost');
+                cell.textContent = fmtNum(filas5[i][j]);
+                cell.dataset.row = i;
+                cell.dataset.col = j;
+                grid.appendChild(cell);
+                filaCeldas.push(cell);
+            }
+            // Añadir separador después de la fila 2
+            if (i === 2) {
+                const sep = document.createElement('div');
+                sep.className = 'sarrus-separator';
+                grid.appendChild(sep);
+            }
+            celdas.push(filaCeldas);
+        }
+
+        gridWrap.appendChild(grid);
+
+        // Crear SVG overlay para flechas (se posiciona después de render)
+        const svgNS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(svgNS, 'svg');
+        svg.setAttribute('class', 'sarrus-svg-overlay');
+        svg.style.position = 'absolute';
+        svg.style.top = '0';
+        svg.style.left = '0';
+        svg.style.pointerEvents = 'none';
+        svg.style.zIndex = '4';
+        svg.style.overflow = 'visible';
+
+        // Marcador de flecha positiva (azul/verde)
+        const defsEl = document.createElementNS(svgNS, 'defs');
+        const markerPos = document.createElementNS(svgNS, 'marker');
+        markerPos.setAttribute('id', 'arrow-pos');
+        markerPos.setAttribute('viewBox', '0 0 10 10');
+        markerPos.setAttribute('refX', '9');
+        markerPos.setAttribute('refY', '5');
+        markerPos.setAttribute('markerWidth', '6');
+        markerPos.setAttribute('markerHeight', '6');
+        markerPos.setAttribute('orient', 'auto-start-reverse');
+        const pathPos = document.createElementNS(svgNS, 'path');
+        pathPos.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+        pathPos.setAttribute('fill', '#10b981');
+        markerPos.appendChild(pathPos);
+        defsEl.appendChild(markerPos);
+
+        // Marcador de flecha negativa (rojo)
+        const markerNeg = document.createElementNS(svgNS, 'marker');
+        markerNeg.setAttribute('id', 'arrow-neg');
+        markerNeg.setAttribute('viewBox', '0 0 10 10');
+        markerNeg.setAttribute('refX', '9');
+        markerNeg.setAttribute('refY', '5');
+        markerNeg.setAttribute('markerWidth', '6');
+        markerNeg.setAttribute('markerHeight', '6');
+        markerNeg.setAttribute('orient', 'auto-start-reverse');
+        const pathNeg = document.createElementNS(svgNS, 'path');
+        pathNeg.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+        pathNeg.setAttribute('fill', '#ef4444');
+        markerNeg.appendChild(pathNeg);
+        defsEl.appendChild(markerNeg);
+
+        svg.appendChild(defsEl);
+        gridWrap.appendChild(svg);
+        container.appendChild(gridWrap);
+
+        // --- Productos de diagonales ---
+        const prodsDiv = document.createElement('div');
+        prodsDiv.style.display = 'flex';
+        prodsDiv.style.gap = '1.5rem';
+        prodsDiv.style.flexWrap = 'wrap';
+        prodsDiv.style.justifyContent = 'center';
+
+        // Positivas
+        const posBox = document.createElement('div');
+        posBox.className = 'sarrus-grupo sarrus-grupo--pos';
+        posBox.innerHTML = '<div class="sarrus-grupo__titulo">Diagonales Principales (+)</div>';
+        diagonales_principales.forEach((d, i) => {
+            posBox.innerHTML += `<div class="sarrus-producto">↘ ${d.elementos.join(' · ')} = <strong>${fmtNum(d.producto)}</strong></div>`;
+        });
+        posBox.innerHTML += `<div class="sarrus-producto" style="font-weight:700; margin-top:0.3rem; border-top:1px solid rgba(16,185,129,0.3); padding-top:0.3rem;">Σ = ${fmtNum(suma_pos)}</div>`;
+        prodsDiv.appendChild(posBox);
+
+        // Negativas
+        const negBox = document.createElement('div');
+        negBox.className = 'sarrus-grupo sarrus-grupo--neg';
+        negBox.innerHTML = '<div class="sarrus-grupo__titulo">Diagonales Secundarias (−)</div>';
+        diagonales_secundarias.forEach((d, i) => {
+            negBox.innerHTML += `<div class="sarrus-producto">↙ ${d.elementos.join(' · ')} = <strong>${fmtNum(d.producto)}</strong></div>`;
+        });
+        negBox.innerHTML += `<div class="sarrus-producto" style="font-weight:700; margin-top:0.3rem; border-top:1px solid rgba(239,68,68,0.3); padding-top:0.3rem;">Σ = ${fmtNum(suma_neg)}</div>`;
+        prodsDiv.appendChild(negBox);
+
+        container.appendChild(prodsDiv);
+
+        // --- Ecuación final ---
+        const eqDiv = document.createElement('div');
+        eqDiv.className = 'sarrus-equation';
+        eqDiv.innerHTML = `det(A) = (<span class="sarrus-equation__pos">${fmtNum(productos_pos[0])} + ${fmtNum(productos_pos[1])} + ${fmtNum(productos_pos[2])}</span>) − (<span class="sarrus-equation__neg">${fmtNum(productos_neg[0])} + ${fmtNum(productos_neg[1])} + ${fmtNum(productos_neg[2])}</span>) = <strong>${fmtNum(determinante)}</strong>`;
+        container.appendChild(eqDiv);
+
+        // Después de insertar en el DOM, dibujar flechas SVG
+        // Usamos requestAnimationFrame para que las celdas tengan dimensiones
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const gridRect = grid.getBoundingClientRect();
+                const wrapRect = gridWrap.getBoundingClientRect();
+                svg.setAttribute('width', gridWrap.offsetWidth);
+                svg.setAttribute('height', gridWrap.offsetHeight);
+
+                function getCellCenter(row, col) {
+                    const cell = celdas[row] && celdas[row][col];
+                    if (!cell) return { x: 0, y: 0 };
+                    const r = cell.getBoundingClientRect();
+                    return {
+                        x: r.left + r.width / 2 - wrapRect.left,
+                        y: r.top + r.height / 2 - wrapRect.top
+                    };
+                }
+
+                // Dibujar flechas positivas (↘)
+                diagonales_principales.forEach((d, idx) => {
+                    const coords = d.coords;
+                    const p1 = getCellCenter(coords[0][0], coords[0][1]);
+                    const p2 = getCellCenter(coords[1][0], coords[1][1]);
+                    const p3 = getCellCenter(coords[2][0], coords[2][1]);
+
+                    const line = document.createElementNS(svgNS, 'path');
+                    line.setAttribute('d', `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}`);
+                    line.setAttribute('stroke', '#10b981');
+                    line.setAttribute('stroke-width', '2.5');
+                    line.setAttribute('fill', 'none');
+                    line.setAttribute('opacity', '0.7');
+                    line.setAttribute('marker-end', 'url(#arrow-pos)');
+                    line.classList.add('sarrus-arrow-animated');
+                    svg.appendChild(line);
+
+                    // Resaltar celdas de esta diagonal
+                    coords.forEach(([r, c]) => {
+                        if (celdas[r] && celdas[r][c]) {
+                            celdas[r][c].classList.add('sarrus-grid__cell--highlight-pos');
+                        }
+                    });
+                });
+
+                // Dibujar flechas negativas (↙)
+                diagonales_secundarias.forEach((d, idx) => {
+                    const coords = d.coords;
+                    const p1 = getCellCenter(coords[0][0], coords[0][1]);
+                    const p2 = getCellCenter(coords[1][0], coords[1][1]);
+                    const p3 = getCellCenter(coords[2][0], coords[2][1]);
+
+                    const line = document.createElementNS(svgNS, 'path');
+                    line.setAttribute('d', `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y} L ${p3.x} ${p3.y}`);
+                    line.setAttribute('stroke', '#ef4444');
+                    line.setAttribute('stroke-width', '2.5');
+                    line.setAttribute('fill', 'none');
+                    line.setAttribute('opacity', '0.7');
+                    line.setAttribute('marker-end', 'url(#arrow-neg)');
+                    line.classList.add('sarrus-arrow-animated');
+                    svg.appendChild(line);
+                });
+            });
+        });
+
+        return container;
+    }
+
+    // =====================================================================
+    // COFACTORES — Renderizado con tachado animado y submatriz lateral
+    // =====================================================================
+
+    /**
+     * Renderiza un paso de cofactor con:
+     * - La matriz original con fila y columna del pivote tachadas
+     * - Flecha visual →
+     * - La submatriz (menor) extraída como cuadrícula real
+     * - Ecuación del cofactor debajo
+     */
+    function renderCofactorStep(paso) {
+        const { matriz, pivote, fila_tachada, col_tachada, submatriz,
+                signo, signo_str, elemento, det_menor, cofactor_valor, n_original } = paso;
+        const n = matriz.length;
+
+        const container = document.createElement('div');
+        container.className = 'cofactor-step-container';
+
+        // --- Matriz con tachado ---
+        const matWrap = document.createElement('div');
+        matWrap.className = 'cofactor-matrix-wrap';
+
+        const grid = document.createElement('div');
+        grid.className = 'cofactor-grid';
+        grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cofactor-grid__cell';
+                cell.textContent = fmtNum(matriz[i][j]);
+
+                if (i === pivote.fila && j === pivote.col) {
+                    cell.classList.add('cofactor-grid__cell--pivote');
+                } else if (i === fila_tachada) {
+                    cell.classList.add('cofactor-grid__cell--row-struck');
+                    cell.classList.add('cofactor-grid__cell--animate-strike');
+                } else if (j === col_tachada) {
+                    cell.classList.add('cofactor-grid__cell--col-struck');
+                    cell.classList.add('cofactor-grid__cell--animate-strike');
+                }
+
+                grid.appendChild(cell);
+            }
+        }
+
+        matWrap.appendChild(grid);
+        container.appendChild(matWrap);
+
+        // --- Flecha →
+        const arrow = document.createElement('div');
+        arrow.className = 'cofactor-arrow';
+        arrow.textContent = '→';
+        container.appendChild(arrow);
+
+        // --- Submatriz (menor) ---
+        const subWrap = document.createElement('div');
+        subWrap.className = 'cofactor-submatrix-wrap';
+
+        const subLabel = document.createElement('div');
+        subLabel.className = 'cofactor-submatrix-label';
+        subLabel.textContent = `Menor M${pivote.fila + 1}${pivote.col + 1} (${submatriz.length}×${submatriz.length})`;
+        subWrap.appendChild(subLabel);
+
+        // Renderizar submatriz usando la misma estructura de cuadrícula
+        const subGrid = document.createElement('div');
+        subGrid.className = 'cofactor-grid';
+        subGrid.style.gridTemplateColumns = `repeat(${submatriz[0].length}, 1fr)`;
+
+        for (let i = 0; i < submatriz.length; i++) {
+            for (let j = 0; j < submatriz[i].length; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'cofactor-grid__cell';
+                cell.textContent = fmtNum(submatriz[i][j]);
+                subGrid.appendChild(cell);
+            }
+        }
+
+        subWrap.appendChild(subGrid);
+        container.appendChild(subWrap);
+
+        // --- Ecuación ---
+        const eqDiv = document.createElement('div');
+        eqDiv.className = 'cofactor-equation';
+        const signoClass = signo > 0 ? 'cofactor-equation__signo-pos' : 'cofactor-equation__signo-neg';
+        eqDiv.innerHTML = `<span class="${signoClass}">(${signo_str}1)</span> × <span class="cofactor-equation__elem">${fmtNum(elemento)}</span> × <span class="cofactor-equation__det">det(M') = ${fmtNum(det_menor)}</span> = <span class="cofactor-equation__result">${fmtNum(cofactor_valor)}</span>`;
+        container.appendChild(eqDiv);
+
+        return container;
+    }
+
+    // =====================================================================
+    // LU — Renderizado progresivo de matrices L y U
+    // =====================================================================
+
+    /**
+     * Renderiza un grid para una matriz L o U con celdas destacadas
+     * donde acaban de cambiar.
+     */
+    function renderLUGrid(matData, n, tipo, celdasNuevas) {
+        const section = document.createElement('div');
+        section.className = 'lu-matrix-section';
+
+        const label = document.createElement('div');
+        label.className = `lu-matrix-section__label lu-matrix-section__label--${tipo}`;
+        label.textContent = `Matriz ${tipo}`;
+        section.appendChild(label);
+
+        const grid = document.createElement('div');
+        grid.className = 'lu-grid';
+        grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+
+        const celdasSet = new Set();
+        if (celdasNuevas) {
+            celdasNuevas.forEach(([r, c]) => celdasSet.add(`${r},${c}`));
+        }
+
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                const cell = document.createElement('div');
+                cell.className = 'lu-grid__cell';
+                const val = matData[i][j];
+                cell.textContent = fmtNum(val);
+
+                // Destacar celdas recién calculadas
+                if (celdasSet.has(`${i},${j}`)) {
+                    cell.classList.add(tipo === 'L' ? 'lu-grid__cell--new-L' : 'lu-grid__cell--new-U');
+                }
+                // Diagonal de L
+                else if (tipo === 'L' && i === j) {
+                    cell.classList.add('lu-grid__cell--diag');
+                }
+                // Ceros triangulares
+                else if (tipo === 'L' && j > i && Math.abs(val) < 1e-10) {
+                    cell.classList.add('lu-grid__cell--zero');
+                }
+                else if (tipo === 'U' && i > j && Math.abs(val) < 1e-10) {
+                    cell.classList.add('lu-grid__cell--zero');
+                }
+
+                grid.appendChild(cell);
+            }
+        }
+
+        section.appendChild(grid);
+        return section;
+    }
+
+    /**
+     * Renderiza un paso LU con las dos matrices L y U lado a lado.
+     */
+    function renderLUStep(paso) {
+        const n = paso.L_estado.length;
+        const container = document.createElement('div');
+        container.className = 'lu-progress-container';
+
+        // Badge de intercambio si aplica
+        if (paso.tipo === 'lu_swap') {
+            const badge = document.createElement('div');
+            badge.className = 'lu-swap-badge';
+            badge.textContent = `↔ Intercambio F${paso.fila_a + 1} ↔ F${paso.fila_b + 1} (intercambio #${paso.intercambio_num})`;
+            container.appendChild(badge);
+        }
+
+        const dual = document.createElement('div');
+        dual.className = 'lu-dual-grid';
+
+        dual.appendChild(renderLUGrid(paso.L_estado, n, 'L', paso.celdas_nuevas_L || []));
+        dual.appendChild(renderLUGrid(paso.U_estado, n, 'U', paso.celdas_nuevas_U || []));
+
+        container.appendChild(dual);
+        return container;
+    }
+
+    /**
+     * Renderiza el paso final de LU con L, U, P y la ecuación del determinante.
+     */
+    function renderLUFinal(paso) {
+        const container = document.createElement('div');
+        container.className = 'lu-progress-container';
+
+        const dual = document.createElement('div');
+        dual.className = 'lu-dual-grid';
+
+        const nL = paso.L_final.length;
+        dual.appendChild(renderLUGrid(paso.L_final, nL, 'L', []));
+        dual.appendChild(renderLUGrid(paso.U_final, nL, 'U', []));
+
+        if (paso.P_final) {
+            dual.appendChild(renderLUGrid(paso.P_final, nL, 'P', []));
+        }
+
+        container.appendChild(dual);
+
+        // Ecuación del determinante
+        const eqDiv = document.createElement('div');
+        eqDiv.className = 'lu-diag-equation';
+        const diagStrs = paso.diag_U.map(v => fmtNum(v));
+        const signoStr = paso.signo > 0 ? '+1' : '−1';
+        eqDiv.innerHTML = `
+            <div>diag(U) = [${diagStrs.join(', ')}]</div>
+            <div>∏ diag(U) = ${diagStrs.join(' × ')} = <strong>${fmtNum(paso.producto_diag)}</strong></div>
+            <div>Intercambios: ${paso.intercambios} → signo = (−1)<sup>${paso.intercambios}</sup> = ${signoStr}</div>
+            <div style="font-size:1.1rem; margin-top:0.5rem;"><strong>det(A) = ${signoStr} × ${fmtNum(paso.producto_diag)} = ${fmtNum(paso.determinante)}</strong></div>
+        `;
+        container.appendChild(eqDiv);
+
+        return container;
+    }
+
+    // =====================================================================
+    // RENDERIZADO PRINCIPAL DE PASOS DEL DETERMINANTE
+    // =====================================================================
+
+    /**
+     * Renderiza los pasos del determinante usando los renderers especializados.
+     * Despacha cada paso según su 'tipo' a la visualización correcta.
+     */
+    function renderPasosDeterminante(pasos, contenedor) {
+        pasos.forEach((paso, index) => {
+            const stepDiv = document.createElement('div');
+            stepDiv.className = 'results__step';
+
+            // Título del paso
+            const titulo = document.createElement('p');
+            titulo.style.textAlign = 'left';
+            titulo.style.color = 'var(--color-primary)';
+            titulo.style.fontWeight = 'bold';
+            titulo.textContent = `Paso ${index}: ${paso.mensaje}`;
+            stepDiv.appendChild(titulo);
+
+            // Despachar según tipo
+            const tipo = paso.tipo || '';
+
+            if (tipo === 'sarrus_visual') {
+                // Sarrus con cuadrícula expandida y flechas SVG
+                const sarrusEl = renderSarrusExpandida(paso);
+                stepDiv.appendChild(sarrusEl);
+            }
+            else if (tipo === 'cofactor_step') {
+                // Cofactores con tachado animado y submatriz
+                const cofEl = renderCofactorStep(paso);
+                stepDiv.appendChild(cofEl);
+            }
+            else if (tipo === 'lu_step' || tipo === 'lu_swap') {
+                // LU con llenado progresivo
+                const luEl = renderLUStep(paso);
+                stepDiv.appendChild(luEl);
+            }
+            else if (tipo === 'lu_final') {
+                // LU resultado final con L, U, P y ecuación
+                const luFinalEl = renderLUFinal(paso);
+                stepDiv.appendChild(luFinalEl);
+            }
+            else if (tipo === 'det_2x2') {
+                // Caso base 2×2 del cofactor
+                if (paso.matriz) {
+                    stepDiv.innerHTML += renderMatrizHtml(paso.matriz);
+                }
+            }
+            else if (tipo === 'expansion_info') {
+                // Info de expansión: mostrar la matriz con la fila/columna resaltada
+                if (paso.matriz) {
+                    const n = paso.matriz.length;
+                    const gridDiv = document.createElement('div');
+                    gridDiv.style.textAlign = 'center';
+                    gridDiv.style.margin = '0.5rem 0';
+
+                    const grid = document.createElement('div');
+                    grid.className = 'cofactor-grid';
+                    grid.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+                    grid.style.display = 'inline-grid';
+
+                    for (let i = 0; i < n; i++) {
+                        for (let j = 0; j < n; j++) {
+                            const cell = document.createElement('div');
+                            cell.className = 'cofactor-grid__cell';
+                            cell.textContent = fmtNum(paso.matriz[i][j]);
+
+                            if (paso.expansion_tipo === 'fila' && i === paso.expansion_indice) {
+                                cell.style.background = 'rgba(99, 102, 241, 0.12)';
+                                cell.style.fontWeight = '700';
+                                cell.style.color = 'var(--color-primary, #6366f1)';
+                            } else if (paso.expansion_tipo === 'columna' && j === paso.expansion_indice) {
+                                cell.style.background = 'rgba(99, 102, 241, 0.12)';
+                                cell.style.fontWeight = '700';
+                                cell.style.color = 'var(--color-primary, #6366f1)';
+                            }
+
+                            grid.appendChild(cell);
+                        }
+                    }
+
+                    gridDiv.appendChild(grid);
+                    stepDiv.appendChild(gridDiv);
+                }
+            }
+            else if (tipo === 'resultado_final') {
+                // No renderizar aquí, se muestra con renderDetResultado
+            }
+            else {
+                // Fallback: matrices ordinarias
+                if (paso.matriz) {
+                    stepDiv.innerHTML += renderMatrizHtml(paso.matriz);
+                }
+                // Sarrus info legacy
+                if (paso.sarrus_info) {
+                    stepDiv.innerHTML += renderSarrusVisual(paso.sarrus_info);
+                }
+            }
+
+            contenedor.appendChild(stepDiv);
+        });
+    }
+
+    // Botón |A|: muestra/oculta el panel de método
+    document.getElementById('btn-mat-determinante').addEventListener('click', () => {
+        const A = parseMatrix(document.getElementById('mat-a').value);
+
+        if (A === null) return showMsg('mat-alert', "Error de formato en Matriz A: Valores irregulares, no numéricos o filas de distinta longitud.");
+        if (A.length === 0) return showMsg('mat-alert', "Datos incompletos: Ingresa la Matriz A.");
+
+        if (A.length !== A[0].length) {
+            return showMsg('mat-alert', `El determinante requiere una matriz cuadrada. Dimensiones: ${A.length}×${A[0].length}.`);
+        }
+
+        const n = A.length;
+
+        // Actualizar disponibilidad de métodos
+        actualizarMetodosDisponibles(n);
+
+        // Mostrar panel
+        detPanel.classList.remove('hidden');
+
+        // Obtener recomendación del servidor (sin calcular aún)
+        fetch('/api/matrices', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ operacion: 'determinante', A, metodo: 'auto', solo_recomendacion: true })
+        }).catch(() => {});
+
+        // Recomendación local rápida (sin esperar al servidor)
+        let recomLocal;
+        if (n <= 2) {
+            recomLocal = { metodo_recomendado: 'cofactores', razon: `Para matrices ${n}×${n}, la expansión directa por cofactores es inmediata y produce pocos pasos.` };
+        } else if (n === 3) {
+            recomLocal = { metodo_recomendado: 'sarrus', razon: 'Para matrices 3×3, Sarrus calcula el determinante con exactamente 6 productos y una resta, sin recursión ni eliminación.' };
+        } else {
+            recomLocal = { metodo_recomendado: 'lu', razon: `Para matrices ${n}×${n}, la factorización LU tiene complejidad O(n³) frente a la complejidad factorial de cofactores, requiriendo generalmente menos operaciones.` };
+        }
+        mostrarRecomendacion(recomLocal);
+
+        detPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    // Botón "Calcular Determinante"
+    document.getElementById('btn-det-calcular').addEventListener('click', async () => {
+        const A = parseMatrix(document.getElementById('mat-a').value);
+
+        if (A === null) return showMsg('mat-alert', "Error de formato en Matriz A.");
+        if (A.length === 0) return showMsg('mat-alert', "Datos incompletos: Ingresa la Matriz A.");
+        if (A.length !== A[0].length) {
+            return showMsg('mat-alert', `El determinante requiere una matriz cuadrada. Dimensiones: ${A.length}×${A[0].length}.`);
+        }
+
+        // Obtener método seleccionado
+        const radSeleccionado = document.querySelector('input[name="det-metodo"]:checked');
+        if (!radSeleccionado) {
+            return showMsg('mat-alert', "Selecciona un método de cálculo para el determinante.");
+        }
+        const metodo = radSeleccionado.value;
+
+        const proceder = await mostrarDialogoRendimiento(A.length, A[0].length, 'determinante');
+        if (!proceder) return;
+
+        // Medir tiempo total de petición
+        const tInicioReq = performance.now();
+
+        try {
+            const res = await fetch('/api/matrices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ operacion: 'determinante', A, metodo })
+            });
+
+            const tFinReq = performance.now();
+            const tiempoPeticionMs = tFinReq - tInicioReq;
+            const json = await res.json();
+
+            if (!res.ok) {
+                // Mostrar error con pasos parciales si existen
+                if (json.pasos || json.pasos_ecuaciones) {
+                    const resultsDiv = document.getElementById('mat-results');
+                    resultsDiv.innerHTML = '';
+                    resultsDiv.classList.remove('hidden');
+
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'results__classification';
+                    errorDiv.style.color = 'var(--color-danger)';
+                    errorDiv.style.background = 'rgba(239,68,68,0.1)';
+                    errorDiv.style.border = '1px solid rgba(239,68,68,0.3)';
+                    errorDiv.textContent = json.error;
+                    resultsDiv.appendChild(errorDiv);
+
+                    if (json.pasos && json.pasos.length > 0) {
+                        renderPasosDeterminante(json.pasos, resultsDiv);
+                    }
+                    if (json.pasos_ecuaciones && json.pasos_ecuaciones.length > 0) {
+                        renderDesgloseAlgebraico(json.pasos_ecuaciones, resultsDiv);
+                    }
+                    if (json.tiempo_info) {
+                        resultsDiv.innerHTML += renderTiempoInfo(json.tiempo_info, tiempoPeticionMs);
+                    }
+
+                    resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    showMsg('mat-alert', json.error || 'Error matemático detectado.', 'error');
+                }
+                return;
+            }
+
+            // Éxito: renderizar resultado
+            const resultsDiv = document.getElementById('mat-results');
+            resultsDiv.innerHTML = '';
+            resultsDiv.classList.remove('hidden');
+
+            // Resultado escalar destacado
+            const detValor = json.resultado;
+            const resultadoDiv = document.createElement('div');
+            resultadoDiv.innerHTML = renderDetResultado(detValor, metodo);
+            resultsDiv.appendChild(resultadoDiv);
+
+            // Actualizar recomendación del servidor si viene
+            if (json.recomendacion) {
+                mostrarRecomendacion(json.recomendacion);
+            }
+
+            // Pasos visuales (matrices)
+            if (json.pasos && json.pasos.length > 0) {
+                renderPasosDeterminante(json.pasos, resultsDiv);
+            }
+
+            // Desglose algebraico
+            if (json.pasos_ecuaciones && json.pasos_ecuaciones.length > 0) {
+                renderDesgloseAlgebraico(json.pasos_ecuaciones, resultsDiv);
+            }
+
+            // Tiempo de ejecución
+            if (json.tiempo_info) {
+                const tiempoContainer = document.createElement('div');
+                tiempoContainer.innerHTML = renderTiempoInfo(json.tiempo_info, tiempoPeticionMs);
+                resultsDiv.appendChild(tiempoContainer);
+            }
+
+            resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+        } catch (error) {
+            showMsg('mat-alert', 'Fallo de Red: No se estableció conexión con el servidor Flask.', 'error');
+        }
+    });
 });
+
