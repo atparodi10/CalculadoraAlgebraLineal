@@ -9,6 +9,7 @@ from .rutas import (
 )
 from .rutas_conversion import convertir
 from .rutas_romanos import page_romanos, api_romanos
+from .rutas_raices import page_raices, api_raices
 
 # Flask(__name__) toma este paquete como referencia para localizar templates/ y
 # static/. Por eso ambas carpetas están dentro de calculadora.
@@ -23,6 +24,7 @@ app.add_url_rule('/conversion', view_func=page_conversion, endpoint='page_conver
 app.add_url_rule('/vectores', view_func=page_vectores, endpoint='page_vectores')
 app.add_url_rule('/matrices', view_func=page_matrices, endpoint='page_matrices')
 app.add_url_rule('/romanos', view_func=page_romanos, endpoint='page_romanos')
+app.add_url_rule('/raices', view_func=page_raices, endpoint='page_raices')
 
 # =========================================
 # API ENDPOINTS
@@ -32,3 +34,4 @@ app.add_url_rule('/convertir', view_func=convertir, methods=['POST'])
 app.add_url_rule('/api/vectores', view_func=api_vectores, methods=['POST'])
 app.add_url_rule('/api/matrices', view_func=api_matrices, methods=['POST'])
 app.add_url_rule('/api/romanos', view_func=api_romanos, methods=['POST'])
+app.add_url_rule('/api/raices', view_func=api_raices, methods=['POST'])

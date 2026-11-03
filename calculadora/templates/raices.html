@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Raíces de Ecuaciones — Lineal Tanix{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/raices.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-header__title">Raíces de Ecuaciones</h1>
+    <p class="page-header__subtitle">Métodos numéricos para encontrar raíces: Bisección, Regla Falsa, Newton-Raphson y Secante</p>
+</div>
+
+<div class="card">
+    <h2 class="card__title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Configuración del Problema
+    </h2>
+
+    <div id="raices-alert" class="alert alert--error hidden" role="alert"></div>
+    <div id="raices-warning" class="alert alert--warning hidden" role="alert"></div>
+
+    <form id="raices-form">
+        <!-- Función f(x) -->
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="raices-funcion" class="form-label">Función f(x)</label>
+            <input class="form-input form-input--lg" type="text" id="raices-funcion"
+                   placeholder="Ej: x^3 - 6*x^2 + 11*x - 6" autocomplete="off" spellcheck="false" required>
+            <small class="form-hint">Usa: +, -, *, /, ^ para potencias. Funciones: sin(x), cos(x), tan(x), exp(x), ln(x), log(x), sqrt(x), abs(x). Constantes: pi, e</small>
+        </div>
+
+        <!-- Método y Error -->
+        <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
+            <div class="form-group">
+                <label for="raices-metodo" class="form-label">Método numérico</label>
+                <select class="form-select" id="raices-metodo">
+                    <option value="biseccion">Bisección</option>
+                    <option value="regla_falsa">Regla Falsa (Falsa Posición)</option>
+                    <option value="newton_raphson">Newton-Raphson</option>
+                    <option value="secante">Secante</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="raices-error" class="form-label">Error esperado Ea (%)</label>
+                <input class="form-input" type="number" id="raices-error" step="any" min="0.000001"
+                       value="0.01" placeholder="Ej: 0.01" required>
+                <small class="form-hint">Criterio de parada en porcentaje.</small>
+            </div>
+        </div>
+
+        <!-- Inputs dinámicos para parámetros del método -->
+        <div id="raices-params-cerrados" class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
+            <div class="form-group">
+                <label for="raices-xl" class="form-label">Límite inferior (xl)</label>
+                <input class="form-input" type="number" id="raices-xl" step="any" placeholder="Ej: 0">
+            </div>
+            <div class="form-group">
+                <label for="raices-xu" class="form-label">Límite superior (xu)</label>
+                <input class="form-input" type="number" id="raices-xu" step="any" placeholder="Ej: 4">
+            </div>
+        </div>
+
+        <div id="raices-params-newton" class="form-grid hidden" style="margin-bottom: 1.25rem;">
+            <div class="form-group">
+                <label for="raices-x0-newton" class="form-label">Valor inicial (x₀)</label>
+                <input class="form-input" type="number" id="raices-x0-newton" step="any" placeholder="Ej: 1.5">
+                <small class="form-hint">Punto de inicio para la iteración.</small>
+            </div>
+        </div>
+
+        <div id="raices-params-secante" class="form-grid form-grid--2 hidden" style="margin-bottom: 1.25rem;">
+            <div class="form-group">
+                <label for="raices-xm1" class="form-label">Valor x₋₁</label>
+                <input class="form-input" type="number" id="raices-xm1" step="any" placeholder="Ej: 0">
+                <small class="form-hint">Primer punto inicial.</small>
+            </div>
+            <div class="form-group">
+                <label for="raices-x0-secante" class="form-label">Valor x₀</label>
+                <input class="form-input" type="number" id="raices-x0-secante" step="any" placeholder="Ej: 1">
+                <small class="form-hint">Segundo punto inicial.</small>
+            </div>
+        </div>
+
+        <!-- Iteraciones máximas (opcional) -->
+        <div class="form-group" style="margin-bottom: 1.25rem;">
+            <label for="raices-maxiter" class="form-label">Iteraciones máximas (opcional)</label>
+            <input class="form-input" type="number" id="raices-maxiter" min="1" max="1000" value="100" placeholder="100">
+        </div>
+
+        <button class="btn btn--success btn--full" type="submit" id="raices-submit">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Calcular Raíz
+        </button>
+    </form>
+</div>
+
+<!-- Info Box con referencia rápida -->
+<div class="info-box">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+    </svg>
+    <div>
+        <p><strong>Métodos cerrados</strong> (Bisección, Regla Falsa): requieren un intervalo [xl, xu] donde exista cambio de signo.</p>
+        <p><strong>Métodos abiertos</strong> (Newton-Raphson, Secante): requieren uno o dos valores iniciales cercanos a la raíz.</p>
+        <p>Ejemplos de funciones: <code>x^3 - x - 2</code> &nbsp; <code>sin(x) - x/2</code> &nbsp; <code>exp(-x) - x</code></p>
+    </div>
+</div>
+
+<div id="raices-results" class="hidden" aria-live="polite"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/raices.js') }}"></script>
+{% endblock %}
+
