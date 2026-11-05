@@ -1,8 +1,51 @@
 # CONTROLADOR DE RAÍCES DE ECUACIONES — Lineal Tanix
 # Frontera entre raices.js y metodos/raices.py. Se registra en
 # calculadora/__init__.py como GET /raices y POST /api/raices.
+import re
 from flask import request, jsonify, render_template
-from .metodos.raices import biseccion, regla_falsa, newton_raphson, secante
+from .metodos.raices import (
+    biseccion, regla_falsa, newton_raphson, secante,
+    normalizar_ecuacion, evaluar_rango, buscar_cambios_signo, evaluar_seguro
+)
+
+
+def _explicitar_multiplicacion(expr):
+    """
+    Convierte multiplicación implícita a explícita para compatibilidad con
+    evaluar_funcion (que es usado internamente por los métodos numéricos).
+    Ejemplos: '2x' → '2*x', '2sin(x)' → '2*sin(x)', 'x(' → 'x*(',
+              ')x' → ')*x', ')2' → ')*2', ')(' → ')*('.
+    No modifica nombres de funciones (sin, cos, tan, exp, ln, log, sqrt, abs).
+    """
+    if not expr:
+        return expr
+
+    # Paso 1: dígito seguido de 'x' (no parte de exp/max, etc.)
+    # Ej: 2x → 2*x, 5x → 5*x  (pero no 'exp')
+    expr = re.sub(r'(\d)([x])\b', r'\1*\2', expr)
+
+    # Paso 2: dígito seguido de función
+    for fn in ('sin', 'cos', 'tan', 'exp', 'ln', 'log', 'sqrt', 'abs'):
+        expr = re.sub(r'(\d)(' + fn + r')\b', r'\1*\2', expr)
+
+    # Paso 3: dígito seguido de '('
+    expr = re.sub(r'(\d)\(', r'\1*(', expr)
+
+    # Paso 4: ')' seguido de dígito, variable o '('
+    expr = re.sub(r'\)(\d)', r')*\1', expr)
+    expr = re.sub(r'\)([x])\b', r')*\1', expr)
+    expr = re.sub(r'\)\(', r')*(', expr)
+
+    # Paso 5: 'x' seguido de '(' o función
+    expr = re.sub(r'\bx\(', r'x*(', expr)
+    for fn in ('sin', 'cos', 'tan', 'exp', 'ln', 'log', 'sqrt', 'abs'):
+        expr = re.sub(r'\bx(' + fn + r')\b', r'x*\1', expr)
+
+    # Paso 6: ')' seguido de función
+    for fn in ('sin', 'cos', 'tan', 'exp', 'ln', 'log', 'sqrt', 'abs'):
+        expr = re.sub(r'\)(' + fn + r')\b', r')*\1', expr)
+
+    return expr
 
 
 def page_raices():
@@ -32,6 +75,12 @@ def api_raices():
 
     if not metodo:
         return jsonify({'error': 'Debes seleccionar un método numérico.'}), 400
+
+    # Normalizar ecuación: si contiene '=', transformar A(x) = B(x) → A(x) - (B(x))
+    funcion = normalizar_ecuacion(funcion)
+
+    # Convertir multiplicación implícita a explícita para evaluar_funcion
+    funcion = _explicitar_multiplicacion(funcion)
 
     try:
         error_esperado = float(error_esperado)
@@ -82,3 +131,75 @@ def api_raices():
 
     return jsonify(resultado)
 
+
+def api_evaluar_rango():
+    """
+    Evalúa f(x) en un rango de puntos para la gráfica exploratoria.
+    POST /api/raices/evaluar
+    Body JSON: {funcion, x_min, x_max, n_puntos?}
+    Respuesta: {puntos: [{x, y}, ...]}
+    """
+    datos = request.get_json(silent=True)
+    if not isinstance(datos, dict):
+        return jsonify({'error': 'JSON inválido.'}), 400
+
+    funcion = datos.get('funcion', '').strip()
+    if not funcion:
+        return jsonify({'error': 'La función es obligatoria.'}), 400
+
+    # Normalizar ecuación
+    funcion = normalizar_ecuacion(funcion)
+
+    try:
+        x_min = float(datos.get('x_min', -10))
+        x_max = float(datos.get('x_max', 10))
+        n_puntos = int(datos.get('n_puntos', 400))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Parámetros numéricos inválidos.'}), 400
+
+    if x_min >= x_max:
+        return jsonify({'error': 'x_min debe ser menor que x_max.'}), 400
+
+    try:
+        puntos = evaluar_rango(funcion, x_min, x_max, n_puntos)
+        return jsonify({'puntos': puntos})
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'Error al evaluar: {str(e)}'}), 500
+
+
+def api_buscar_limites():
+    """
+    Busca intervalos con cambio de signo para métodos cerrados.
+    POST /api/raices/buscar-limites
+    Body JSON: {funcion, x_min, x_max}
+    Respuesta: {candidatos: [{xl, xu, f_xl, f_xu}, ...]}
+    """
+    datos = request.get_json(silent=True)
+    if not isinstance(datos, dict):
+        return jsonify({'error': 'JSON inválido.'}), 400
+
+    funcion = datos.get('funcion', '').strip()
+    if not funcion:
+        return jsonify({'error': 'La función es obligatoria.'}), 400
+
+    # Normalizar ecuación
+    funcion = normalizar_ecuacion(funcion)
+
+    try:
+        x_min = float(datos.get('x_min', -10))
+        x_max = float(datos.get('x_max', 10))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'Parámetros numéricos inválidos.'}), 400
+
+    if x_min >= x_max:
+        return jsonify({'error': 'x_min debe ser menor que x_max.'}), 400
+
+    try:
+        candidatos = buscar_cambios_signo(funcion, x_min, x_max)
+        return jsonify({'candidatos': candidatos})
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': f'Error en búsqueda: {str(e)}'}), 500

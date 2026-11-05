@@ -575,3 +575,443 @@ def secante(expresion, x_menos1, x0, error_esperado, max_iter=100):
         'pasos': pasos,
         'mensaje': f'No convergió en {max_iter} iteraciones. Última aproximación: x ≈ {_redondear(xi, 8)}'
     }
+
+
+# =========================================
+# PARSER SEGURO DE EXPRESIONES (sin eval)
+# =========================================
+
+class _Token:
+    """Token para el parser seguro."""
+    NUM = 'NUM'
+    OP = 'OP'
+    FUNC = 'FUNC'
+    LPAREN = 'LPAREN'
+    RPAREN = 'RPAREN'
+    VAR = 'VAR'
+    
+    def __init__(self, tipo, valor):
+        self.tipo = tipo
+        self.valor = valor
+    
+    def __repr__(self):
+        return f'Token({self.tipo}, {self.valor})'
+
+
+def _tokenizar(expr):
+    """
+    Tokeniza una expresión matemática de forma segura.
+    Soporta: números, x, +, -, *, /, ^, (, ), funciones (sin,cos,tan,exp,ln,log,sqrt,abs), pi, e
+    Inserta multiplicación implícita: 2x, 2(, )(, x(, )x, piX, etc.
+    """
+    tokens = []
+    i = 0
+    expr = expr.strip()
+    
+    funciones_validas = {'sin', 'cos', 'tan', 'exp', 'ln', 'log', 'sqrt', 'abs'}
+    
+    while i < len(expr):
+        c = expr[i]
+        
+        # Espacios
+        if c == ' ':
+            i += 1
+            continue
+        
+        # Números (incluyendo decimales)
+        if c.isdigit() or (c == '.' and i + 1 < len(expr) and expr[i+1].isdigit()):
+            num_str = ''
+            while i < len(expr) and (expr[i].isdigit() or expr[i] == '.'):
+                num_str += expr[i]
+                i += 1
+            tokens.append(_Token(_Token.NUM, float(num_str)))
+            continue
+        
+        # Palabras: funciones, constantes, variable x
+        if c.isalpha() or c == '_':
+            palabra = ''
+            while i < len(expr) and (expr[i].isalpha() or expr[i] == '_'):
+                palabra += expr[i]
+                i += 1
+            
+            palabra_lower = palabra.lower()
+            
+            if palabra_lower == 'x':
+                tokens.append(_Token(_Token.VAR, 'x'))
+            elif palabra_lower == 'pi':
+                tokens.append(_Token(_Token.NUM, _PI))
+            elif palabra_lower == 'e' and (i >= len(expr) or expr[i] != 'x'):
+                # 'e' como constante de Euler, pero no si es inicio de 'exp'
+                if palabra_lower == 'e' and i < len(expr) and expr[i:i+2] == 'xp':
+                    # Es 'exp' — retroceder y leer 'exp'
+                    pass  # No debería llegar aquí porque leemos toda la palabra
+                tokens.append(_Token(_Token.NUM, 2.718281828459045))
+            elif palabra_lower in funciones_validas:
+                tokens.append(_Token(_Token.FUNC, palabra_lower))
+            else:
+                raise ValueError(f"Identificador no reconocido: '{palabra}'")
+            continue
+        
+        # Operadores
+        if c in '+-':
+            tokens.append(_Token(_Token.OP, c))
+            i += 1
+            continue
+        
+        if c == '*':
+            if i + 1 < len(expr) and expr[i+1] == '*':
+                tokens.append(_Token(_Token.OP, '^'))
+                i += 2
+            else:
+                tokens.append(_Token(_Token.OP, '*'))
+                i += 1
+            continue
+        
+        if c == '/':
+            tokens.append(_Token(_Token.OP, '/'))
+            i += 1
+            continue
+        
+        if c == '^':
+            tokens.append(_Token(_Token.OP, '^'))
+            i += 1
+            continue
+        
+        if c == '(':
+            tokens.append(_Token(_Token.LPAREN, '('))
+            i += 1
+            continue
+        
+        if c == ')':
+            tokens.append(_Token(_Token.RPAREN, ')'))
+            i += 1
+            continue
+        
+        raise ValueError(f"Carácter no permitido: '{c}'")
+    
+    # Insertar multiplicación implícita
+    resultado = []
+    for j, tok in enumerate(tokens):
+        if j > 0:
+            prev = tokens[j-1]
+            necesita_mult = False
+            
+            # NUM seguido de VAR, FUNC, LPAREN o NUM(pi/e)
+            if prev.tipo == _Token.NUM and tok.tipo in (_Token.VAR, _Token.FUNC, _Token.LPAREN, _Token.NUM):
+                necesita_mult = True
+            # VAR seguido de NUM, FUNC, LPAREN, VAR
+            elif prev.tipo == _Token.VAR and tok.tipo in (_Token.NUM, _Token.FUNC, _Token.LPAREN, _Token.VAR):
+                necesita_mult = True
+            # RPAREN seguido de NUM, VAR, FUNC, LPAREN
+            elif prev.tipo == _Token.RPAREN and tok.tipo in (_Token.NUM, _Token.VAR, _Token.FUNC, _Token.LPAREN):
+                necesita_mult = True
+            
+            if necesita_mult:
+                resultado.append(_Token(_Token.OP, '*'))
+        
+        resultado.append(tok)
+    
+    return resultado
+
+
+class _Parser:
+    """
+    Parser recursivo descendente para evaluar expresiones matemáticas.
+    Gramática:
+      expr     -> term (('+' | '-') term)*
+      term     -> exponent (('*' | '/') exponent)*
+      exponent -> unary ('^' unary)*
+      unary    -> ('+' | '-') unary | atom
+      atom     -> NUM | VAR | FUNC '(' expr ')' | '(' expr ')'
+    
+    SEGURIDAD: NO usa eval(). Evalúa directamente con las funciones matemáticas
+    puras definidas en este módulo.
+    """
+    
+    def __init__(self, tokens, x_val):
+        self.tokens = tokens
+        self.pos = 0
+        self.x_val = x_val
+    
+    def _peek(self):
+        if self.pos < len(self.tokens):
+            return self.tokens[self.pos]
+        return None
+    
+    def _consume(self):
+        tok = self.tokens[self.pos]
+        self.pos += 1
+        return tok
+    
+    def _expect(self, tipo):
+        tok = self._peek()
+        if tok is None or tok.tipo != tipo:
+            raise ValueError(f"Se esperaba {tipo}, se encontró {tok}")
+        return self._consume()
+    
+    def parse(self):
+        resultado = self._expr()
+        if self.pos < len(self.tokens):
+            raise ValueError(f"Tokens inesperados al final: {self.tokens[self.pos:]}")
+        return resultado
+    
+    def _expr(self):
+        """expr -> term (('+' | '-') term)*"""
+        resultado = self._term()
+        while True:
+            tok = self._peek()
+            if tok and tok.tipo == _Token.OP and tok.valor in ('+', '-'):
+                self._consume()
+                derecho = self._term()
+                if tok.valor == '+':
+                    resultado = resultado + derecho
+                else:
+                    resultado = resultado - derecho
+            else:
+                break
+        return resultado
+    
+    def _term(self):
+        """term -> exponent (('*' | '/') exponent)*"""
+        resultado = self._exponent()
+        while True:
+            tok = self._peek()
+            if tok and tok.tipo == _Token.OP and tok.valor in ('*', '/'):
+                self._consume()
+                derecho = self._exponent()
+                if tok.valor == '*':
+                    resultado = resultado * derecho
+                else:
+                    if derecho == 0:
+                        return float('inf') if resultado >= 0 else float('-inf')
+                    resultado = resultado / derecho
+            else:
+                break
+        return resultado
+    
+    def _exponent(self):
+        """exponent -> unary ('^' unary)* (right-associative)"""
+        base = self._unary()
+        tok = self._peek()
+        if tok and tok.tipo == _Token.OP and tok.valor == '^':
+            self._consume()
+            exponente = self._exponent()  # Right-associative recursion
+            return _pow_real(base, exponente)
+        return base
+    
+    def _unary(self):
+        """unary -> ('+' | '-') unary | atom"""
+        tok = self._peek()
+        if tok and tok.tipo == _Token.OP and tok.valor in ('+', '-'):
+            self._consume()
+            val = self._unary()
+            return -val if tok.valor == '-' else val
+        return self._atom()
+    
+    def _atom(self):
+        """atom -> NUM | VAR | FUNC '(' expr ')' | '(' expr ')'"""
+        tok = self._peek()
+        if tok is None:
+            raise ValueError("Expresión incompleta")
+        
+        if tok.tipo == _Token.NUM:
+            self._consume()
+            return float(tok.valor)
+        
+        if tok.tipo == _Token.VAR:
+            self._consume()
+            return float(self.x_val)
+        
+        if tok.tipo == _Token.FUNC:
+            self._consume()
+            nombre = tok.valor
+            self._expect(_Token.LPAREN)
+            argumento = self._expr()
+            self._expect(_Token.RPAREN)
+            
+            func = _FUNCIONES_PERMITIDAS.get(nombre)
+            if func is None:
+                raise ValueError(f"Función no reconocida: {nombre}")
+            return float(func(argumento))
+        
+        if tok.tipo == _Token.LPAREN:
+            self._consume()
+            resultado = self._expr()
+            self._expect(_Token.RPAREN)
+            return resultado
+        
+        raise ValueError(f"Token inesperado: {tok}")
+
+
+def evaluar_seguro(expresion, x_val):
+    """
+    Evalúa una expresión f(x) de forma 100% segura, SIN eval().
+    Usa un parser recursivo descendente.
+    Soporta: +, -, *, /, ^, **, sin, cos, tan, exp, ln, log, sqrt, abs, pi, e
+    Soporta multiplicación implícita: 2x, 2(x+1), (x+1)(x-1), etc.
+    
+    Retorna float. Lanza ValueError si la expresión es inválida.
+    """
+    expr = expresion.strip()
+    if not expr:
+        raise ValueError("La expresión está vacía")
+    
+    try:
+        tokens = _tokenizar(expr)
+        parser = _Parser(tokens, x_val)
+        resultado = parser.parse()
+        return float(resultado)
+    except (ValueError, ZeroDivisionError, OverflowError) as e:
+        # Re-raise ValueError for invalid expressions
+        if isinstance(e, ZeroDivisionError):
+            return float('inf')
+        if isinstance(e, OverflowError):
+            return float('inf')
+        raise
+    except Exception:
+        return float('nan')
+
+
+def normalizar_ecuacion(expresion):
+    """
+    Si la expresión contiene '=', la transforma de A(x) = B(x) a A(x) - (B(x)).
+    Si no contiene '=', la retorna tal cual.
+    Esto permite al usuario escribir ecuaciones como 'x^2 = 2' → 'x^2 - (2)'.
+    """
+    if '=' not in expresion:
+        return expresion.strip()
+    
+    partes = expresion.split('=', 1)
+    if len(partes) != 2:
+        return expresion.strip()
+    
+    lado_izq = partes[0].strip()
+    lado_der = partes[1].strip()
+    
+    if not lado_izq or not lado_der:
+        return expresion.strip()
+    
+    return f"({lado_izq}) - ({lado_der})"
+
+
+def evaluar_rango(expresion, x_min, x_max, n_puntos=300):
+    """
+    Evalúa la función en un rango de puntos para graficación.
+    Usa el parser seguro (evaluar_seguro).
+    Retorna lista de dicts {x, y} con manejo de discontinuidades.
+    Valores NaN/Inf se marcan como None para que el frontend corte la curva.
+    """
+    if n_puntos < 2:
+        n_puntos = 2
+    if n_puntos > 2000:
+        n_puntos = 2000
+    
+    paso = (x_max - x_min) / (n_puntos - 1)
+    puntos = []
+    
+    for i in range(n_puntos):
+        x = x_min + i * paso
+        try:
+            y = evaluar_seguro(expresion, x)
+            # Detectar valores no finitos
+            if y != y or y == float('inf') or y == float('-inf'):
+                puntos.append({'x': round(x, 10), 'y': None})
+            elif _abs(y) > 1e15:
+                puntos.append({'x': round(x, 10), 'y': None})
+            else:
+                puntos.append({'x': round(x, 10), 'y': round(y, 10)})
+        except Exception:
+            puntos.append({'x': round(x, 10), 'y': None})
+    
+    return puntos
+
+
+def buscar_cambios_signo(expresion, x_min, x_max, n_muestras=500):
+    """
+    Escanea el rango [x_min, x_max] buscando intervalos donde f(x) cambia de signo.
+    Filtra asíntotas verificando que |f(x)| no sea demasiado grande cerca del cruce.
+    Retorna lista de dicts {xl, xu, f_xl, f_xu} con los intervalos candidatos.
+    """
+    if n_muestras < 10:
+        n_muestras = 10
+    if n_muestras > 5000:
+        n_muestras = 5000
+    
+    paso = (x_max - x_min) / n_muestras
+    candidatos = []
+    
+    prev_x = x_min
+    try:
+        prev_y = evaluar_seguro(expresion, prev_x)
+    except Exception:
+        prev_y = float('nan')
+    
+    for i in range(1, n_muestras + 1):
+        curr_x = x_min + i * paso
+        try:
+            curr_y = evaluar_seguro(expresion, curr_x)
+        except Exception:
+            curr_y = float('nan')
+            prev_x = curr_x
+            prev_y = curr_y
+            continue
+        
+        # Verificar que ambos valores sean finitos
+        prev_finito = (prev_y == prev_y and prev_y != float('inf') and prev_y != float('-inf'))
+        curr_finito = (curr_y == curr_y and curr_y != float('inf') and curr_y != float('-inf'))
+        
+        # Detectar cambio de signo estricto O raíz exacta en un extremo
+        hay_cambio = False
+        if prev_finito and curr_finito:
+            if prev_y * curr_y < 0:
+                hay_cambio = True
+            elif prev_y == 0 and curr_y != 0:
+                # Raíz exacta en prev_x — solo reportar si hay cambio real
+                # Verificar el signo justo antes de prev_x
+                try:
+                    antes_y = evaluar_seguro(expresion, prev_x - paso * 0.5)
+                    if antes_y == antes_y and antes_y != float('inf') and antes_y != float('-inf'):
+                        if antes_y * curr_y < 0:
+                            hay_cambio = True
+                except Exception:
+                    pass
+            elif curr_y == 0 and prev_y != 0:
+                # Raíz exacta en curr_x — solo reportar si hay cambio real
+                try:
+                    despues_y = evaluar_seguro(expresion, curr_x + paso * 0.5)
+                    if despues_y == despues_y and despues_y != float('inf') and despues_y != float('-inf'):
+                        if prev_y * despues_y < 0:
+                            hay_cambio = True
+                except Exception:
+                    pass
+        
+        if hay_cambio:
+            # Verificar que NO es una asíntota
+            # En una asíntota, |f| suele ser muy grande cerca del cruce
+            es_asintota = False
+            
+            # Revisar el valor medio
+            mid_x = (prev_x + curr_x) / 2.0
+            try:
+                mid_y = evaluar_seguro(expresion, mid_x)
+                # Si el valor medio es mucho mayor que los extremos, es probable asíntota
+                max_extremo = max(_abs(prev_y), _abs(curr_y))
+                if mid_y != mid_y or _abs(mid_y) > 1e10:
+                    es_asintota = True
+                elif max_extremo > 0 and _abs(mid_y) > 100 * max_extremo:
+                    es_asintota = True
+            except Exception:
+                es_asintota = True
+            
+            if not es_asintota:
+                candidatos.append({
+                    'xl': round(prev_x, 8),
+                    'xu': round(curr_x, 8),
+                    'f_xl': round(prev_y, 8),
+                    'f_xu': round(curr_y, 8),
+                })
+        
+        prev_x = curr_x
+        prev_y = curr_y
+    
+    return candidatos

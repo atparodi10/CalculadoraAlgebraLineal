@@ -11,26 +11,59 @@
     <p class="page-header__subtitle">Métodos numéricos para encontrar raíces: Bisección, Regla Falsa, Newton-Raphson y Secante</p>
 </div>
 
+<div id="raices-alert" class="alert alert--error hidden" role="alert"></div>
+<div id="raices-warning" class="alert alert--warning hidden" role="alert"></div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  1. EDITOR MATEMÁTICO NATURAL            ║
+     ╚══════════════════════════════════════════╝ -->
 <div class="card">
     <h2 class="card__title">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
         </svg>
-        Configuración del Problema
+        Función f(x)
     </h2>
 
-    <div id="raices-alert" class="alert alert--error hidden" role="alert"></div>
-    <div id="raices-warning" class="alert alert--warning hidden" role="alert"></div>
+    <div class="math-editor">
+        <div class="math-editor__field-wrapper">
+            <label class="form-label" for="raices-funcion-raw">Escribe tu función o ecuación</label>
+            <div class="math-editor__input-row">
+                <span class="math-editor__prefix">f(x) =</span>
+                <input class="form-input form-input--lg math-editor__input" type="text"
+                       id="raices-funcion-raw"
+                       placeholder="Ej: x^2 - 2,  sqrt(x+3) - x,  x^2 = 2"
+                       autocomplete="off" spellcheck="false">
+            </div>
+            <small class="form-hint">
+                Soporta: <code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>^</code>
+                &nbsp;|&nbsp; <code>sin</code> <code>cos</code> <code>tan</code> <code>exp</code>
+                <code>ln</code> <code>log</code> <code>sqrt</code> <code>abs</code>
+                &nbsp;|&nbsp; <code>pi</code> <code>e</code>
+                &nbsp;|&nbsp; Mult. implícita: <code>2x</code>, <code>2(x+1)</code>
+                &nbsp;|&nbsp; Ecuaciones: <code>x^2 = 2</code>
+            </small>
+        </div>
+        <div class="math-editor__preview" id="math-preview">
+            <span class="math-editor__preview-label">Vista previa</span>
+            <div class="math-editor__preview-render" id="math-preview-render"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  2. CONFIGURACIÓN DEL MÉTODO             ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="card">
+    <h2 class="card__title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        Configuración del Método
+    </h2>
 
     <form id="raices-form">
-        <!-- Función f(x) -->
-        <div class="form-group" style="margin-bottom: 1.25rem;">
-            <label for="raices-funcion" class="form-label">Función f(x)</label>
-            <input class="form-input form-input--lg" type="text" id="raices-funcion"
-                   placeholder="Ej: x^3 - 6*x^2 + 11*x - 6" autocomplete="off" spellcheck="false" required>
-            <small class="form-hint">Usa: +, -, *, /, ^ para potencias. Funciones: sin(x), cos(x), tan(x), exp(x), ln(x), log(x), sqrt(x), abs(x). Constantes: pi, e</small>
-        </div>
-
         <!-- Método y Error -->
         <div class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
             <div class="form-group">
@@ -50,53 +83,124 @@
             </div>
         </div>
 
-        <!-- Inputs dinámicos para parámetros del método -->
-        <div id="raices-params-cerrados" class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
-            <div class="form-group">
-                <label for="raices-xl" class="form-label">Límite inferior (xl)</label>
-                <input class="form-input" type="number" id="raices-xl" step="any" placeholder="Ej: 0">
-            </div>
-            <div class="form-group">
-                <label for="raices-xu" class="form-label">Límite superior (xu)</label>
-                <input class="form-input" type="number" id="raices-xu" step="any" placeholder="Ej: 4">
-            </div>
-        </div>
-
-        <div id="raices-params-newton" class="form-grid hidden" style="margin-bottom: 1.25rem;">
-            <div class="form-group">
-                <label for="raices-x0-newton" class="form-label">Valor inicial (x₀)</label>
-                <input class="form-input" type="number" id="raices-x0-newton" step="any" placeholder="Ej: 1.5">
-                <small class="form-hint">Punto de inicio para la iteración.</small>
-            </div>
-        </div>
-
-        <div id="raices-params-secante" class="form-grid form-grid--2 hidden" style="margin-bottom: 1.25rem;">
-            <div class="form-group">
-                <label for="raices-xm1" class="form-label">Valor x₋₁</label>
-                <input class="form-input" type="number" id="raices-xm1" step="any" placeholder="Ej: 0">
-                <small class="form-hint">Primer punto inicial.</small>
-            </div>
-            <div class="form-group">
-                <label for="raices-x0-secante" class="form-label">Valor x₀</label>
-                <input class="form-input" type="number" id="raices-x0-secante" step="any" placeholder="Ej: 1">
-                <small class="form-hint">Segundo punto inicial.</small>
-            </div>
-        </div>
-
-        <!-- Iteraciones máximas (opcional) -->
+        <!-- Iteraciones máximas -->
         <div class="form-group" style="margin-bottom: 1.25rem;">
             <label for="raices-maxiter" class="form-label">Iteraciones máximas (opcional)</label>
             <input class="form-input" type="number" id="raices-maxiter" min="1" max="1000" value="100" placeholder="100">
         </div>
-
-        <button class="btn btn--success btn--full" type="submit" id="raices-submit">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-            </svg>
-            Calcular Raíz
-        </button>
     </form>
 </div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  3. GRÁFICA INTERACTIVA EXPLORATORIA      ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="card" id="grafica-card">
+    <h2 class="card__title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+        </svg>
+        Gráfica Exploratoria
+        <span class="graph-status" id="graph-status"></span>
+    </h2>
+
+    <div class="graph-container" id="graph-container">
+        <canvas id="graph-canvas" class="graph-canvas"></canvas>
+        <div class="graph-controls">
+            <button type="button" class="graph-btn" id="graph-zoom-in" title="Acercar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button type="button" class="graph-btn" id="graph-zoom-out" title="Alejar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button type="button" class="graph-btn" id="graph-reset" title="Restablecer vista">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+        </div>
+        <div class="graph-coords" id="graph-coords"></div>
+    </div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  4. SELECCIÓN DE INTERVALOS [xl, xu]      ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="card" id="limites-card">
+    <h2 class="card__title">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 3l-6.5 18a.55.55 0 0 1-1 0L10 14 3 10.5a.55.55 0 0 1 0-1L21 3z"/>
+        </svg>
+        <span id="limites-titulo">Límites del Intervalo</span>
+    </h2>
+
+    <!-- Parámetros para métodos cerrados (Bisección, Regla Falsa) -->
+    <div id="raices-params-cerrados" class="form-grid form-grid--2" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+            <label for="raices-xl" class="form-label">Límite inferior (xl)</label>
+            <input class="form-input" type="number" id="raices-xl" step="any" placeholder="Ej: 0">
+            <small class="form-hint">Arrastra el marcador <span class="marker-label marker-label--xl">xl</span> en la gráfica</small>
+        </div>
+        <div class="form-group">
+            <label for="raices-xu" class="form-label">Límite superior (xu)</label>
+            <input class="form-input" type="number" id="raices-xu" step="any" placeholder="Ej: 4">
+            <small class="form-hint">Arrastra el marcador <span class="marker-label marker-label--xu">xu</span> en la gráfica</small>
+        </div>
+    </div>
+
+    <!-- Parámetros para Newton-Raphson -->
+    <div id="raices-params-newton" class="hidden" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+            <label for="raices-x0-newton" class="form-label">Valor inicial (x₀)</label>
+            <input class="form-input" type="number" id="raices-x0-newton" step="any" placeholder="Ej: 1.5">
+            <small class="form-hint">Arrastra el marcador en la gráfica o escribe el valor.</small>
+        </div>
+    </div>
+
+    <!-- Parámetros para Secante -->
+    <div id="raices-params-secante" class="form-grid form-grid--2 hidden" style="margin-bottom: 1.25rem;">
+        <div class="form-group">
+            <label for="raices-xm1" class="form-label">Valor x₋₁</label>
+            <input class="form-input" type="number" id="raices-xm1" step="any" placeholder="Ej: 0">
+            <small class="form-hint">Primer punto inicial.</small>
+        </div>
+        <div class="form-group">
+            <label for="raices-x0-secante" class="form-label">Valor x₀</label>
+            <input class="form-input" type="number" id="raices-x0-secante" step="any" placeholder="Ej: 1">
+            <small class="form-hint">Segundo punto inicial.</small>
+        </div>
+    </div>
+
+    <!-- Botón "Buscar límites" (solo para métodos cerrados) -->
+    <div id="buscar-limites-wrapper" style="margin-bottom: 1rem;">
+        <button type="button" class="btn btn--primary" id="buscar-limites-btn" style="width: 100%;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Buscar Límites Automáticamente
+        </button>
+    </div>
+
+    <!-- Candidatos de intervalos -->
+    <div id="candidatos-container" class="hidden"></div>
+
+    <!-- Validación de intervalo -->
+    <div id="intervalo-status" class="hidden"></div>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  5. BOTÓN CALCULAR                        ║
+     ╚══════════════════════════════════════════╝ -->
+<div class="card">
+    <button class="btn btn--success btn--full" type="button" id="raices-submit">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        Calcular Raíz
+    </button>
+</div>
+
+<!-- ╔══════════════════════════════════════════╗
+     ║  6. RESULTADOS (post-cálculo)             ║
+     ╚══════════════════════════════════════════╝ -->
+<div id="raices-results" class="hidden" aria-live="polite"></div>
 
 <!-- Info Box con referencia rápida -->
 <div class="info-box">
@@ -106,14 +210,11 @@
     <div>
         <p><strong>Métodos cerrados</strong> (Bisección, Regla Falsa): requieren un intervalo [xl, xu] donde exista cambio de signo.</p>
         <p><strong>Métodos abiertos</strong> (Newton-Raphson, Secante): requieren uno o dos valores iniciales cercanos a la raíz.</p>
-        <p>Ejemplos de funciones: <code>x^3 - x - 2</code> &nbsp; <code>sin(x) - x/2</code> &nbsp; <code>exp(-x) - x</code></p>
+        <p>Ejemplos: <code>x^3 - x - 2</code> &nbsp; <code>sin(x) - x/2</code> &nbsp; <code>exp(-x) - x</code> &nbsp; <code>x^2 = 2</code></p>
     </div>
 </div>
-
-<div id="raices-results" class="hidden" aria-live="polite"></div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/raices.js') }}"></script>
 {% endblock %}
-

@@ -1,8 +1,280 @@
 /*
  * ESTILOS DE RAÍCES DE ECUACIONES — Lineal Tanix
- * Estilos específicos para la tabla de iteraciones del módulo de raíces.
+ * Estilos para: editor matemático, gráfica interactiva, tabla de iteraciones,
+ * marcadores arrastrables y selección de intervalos.
  * Reutiliza las variables y clases base de base.css y components.css.
  */
+
+/* =========================================
+   EDITOR MATEMÁTICO
+   ========================================= */
+.math-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.math-editor__field-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.math-editor__input-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.math-editor__prefix {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.math-editor__input {
+    flex: 1;
+    font-family: 'Fira Code', monospace !important;
+}
+
+.math-editor__preview {
+    background: var(--bg-card-alt);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transition: background var(--transition-smooth), border-color var(--transition-smooth);
+}
+
+.math-editor__preview-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    flex-shrink: 0;
+}
+
+.math-editor__preview-render {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.05rem;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+.math-editor__preview-render .eq-fn {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.math-editor__preview-render .eq-op {
+    color: var(--color-secondary);
+    font-weight: 700;
+    padding: 0 0.15em;
+}
+
+.math-editor__preview-render .eq-num {
+    color: var(--color-success);
+}
+
+/* =========================================
+   GRÁFICA INTERACTIVA
+   ========================================= */
+.graph-container {
+    position: relative;
+    width: 100%;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--bg-card-alt);
+    border: 1px solid var(--border-color);
+    transition: background var(--transition-smooth), border-color var(--transition-smooth);
+}
+
+.graph-canvas {
+    display: block;
+    width: 100%;
+    height: 380px;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.graph-controls {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    z-index: 10;
+}
+
+.graph-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.graph-btn:hover {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.graph-coords {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.75rem;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 2px 8px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.graph-coords.visible {
+    opacity: 1;
+}
+
+.graph-status {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-left: auto;
+    font-family: 'Inter', sans-serif;
+}
+
+/* =========================================
+   MARCADORES / LABELS EN INPUTS
+   ========================================= */
+.marker-label {
+    display: inline-block;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    vertical-align: middle;
+}
+
+.marker-label--xl {
+    background: rgba(239, 68, 68, 0.15);
+    color: var(--color-danger);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.marker-label--xu {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--color-primary);
+    border: 1px solid rgba(99, 102, 241, 0.3);
+}
+
+/* =========================================
+   CANDIDATOS DE INTERVALOS
+   ========================================= */
+.candidatos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.candidato-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1rem;
+    background: var(--bg-card-alt);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: 'Fira Code', monospace;
+    font-size: 0.88rem;
+}
+
+.candidato-item:hover {
+    background: var(--color-primary-light);
+    border-color: var(--color-primary);
+}
+
+.candidato-item__label {
+    color: var(--text-secondary);
+}
+
+.candidato-item__btn {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    background: none;
+    border: 1px solid var(--color-primary);
+    border-radius: 4px;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.candidato-item__btn:hover {
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+}
+
+/* =========================================
+   VALIDACIÓN DE INTERVALO
+   ========================================= */
+.intervalo-ok {
+    padding: 0.6rem 1rem;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-sm);
+    color: var(--color-success);
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.intervalo-err {
+    padding: 0.6rem 1rem;
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-sm);
+    color: var(--color-danger);
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+[data-theme="dark"] .intervalo-ok {
+    background: rgba(52, 211, 153, 0.1);
+}
+
+[data-theme="dark"] .intervalo-err {
+    background: rgba(248, 113, 113, 0.1);
+}
 
 /* =========================================
    TABLA DE ITERACIONES
@@ -71,9 +343,51 @@
 }
 
 /* =========================================
+   RESULTADOS POST-CÁLCULO
+   ========================================= */
+.result-root-banner {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--color-primary-light);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.5rem;
+    animation: fadeSlideUp 0.4s ease-out;
+}
+
+.result-root-banner__value {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: 0.02em;
+}
+
+.result-root-banner__meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* =========================================
    RESPONSIVE
    ========================================= */
 @media (max-width: 768px) {
+    .graph-canvas {
+        height: 280px;
+    }
+
+    .math-editor__input-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .math-editor__prefix {
+        font-size: 1rem;
+    }
+
     .raices-table {
         font-size: 0.8rem;
     }
@@ -84,3 +398,8 @@
     }
 }
 
+@media (max-width: 480px) {
+    .graph-canvas {
+        height: 240px;
+    }
+}
