@@ -13,7 +13,6 @@ VALIDOS = {
     '/api/raices': {'funcion':'x^2=2','metodo':'biseccion','xl':0,'xu':2,'error_esperado':.001},
     '/api/raices/evaluar': {'funcion':'2x (2)(x+1)','x_min':-2,'x_max':2,'n_puntos':5},
     '/api/raices/buscar-limites': {'funcion':'x^2-2','x_min':-2,'x_max':2},
-    '/api/raices/comparar': {'funcion':'x^2-2','xl':0,'xu':2,'x0':1,'x_menos1':0,'error_esperado':.001},
 }
 
 class API(unittest.TestCase):
@@ -52,8 +51,7 @@ class API(unittest.TestCase):
                ('/api/raices',{'xu':math.inf}),('/api/raices',{'xl':2}),
                ('/api/raices/evaluar',{'n_puntos':1201}),('/api/raices/evaluar',{'n_puntos':1}),
                ('/api/raices/evaluar',{'x_min':2}),('/api/raices/evaluar',{'x_max':math.nan}),
-               ('/api/raices/buscar-limites',{'funcion':'__import__(x)'}),
-               ('/api/raices/comparar',{'max_iter':1001})]
+               ('/api/raices/buscar-limites',{'funcion':'__import__(x)'})]
         for ruta,cambios in casos:
             with self.subTest(ruta=ruta,cambios=cambios):
                 r=self.client.post(ruta,json={**VALIDOS[ruta],**cambios})
@@ -68,13 +66,6 @@ class API(unittest.TestCase):
                 with self.subTest(ruta=ruta,campo=campo):
                     datos=VALIDOS[ruta].copy();datos.pop(campo)
                     self.assertEqual(self.client.post(ruta,json=datos).status_code,400)
-    def test_comparacion(self):
-        r=self.client.post('/api/raices/comparar',json=VALIDOS['/api/raices/comparar']).get_json()
-        self.assertEqual(len(r['comparacion']),4)
-        self.assertTrue(all(x['convergencia'] for x in r['comparacion']))
-        datos={**VALIDOS['/api/raices/comparar'],'xl':2,'xu':3,'x0':0,'x_menos1':0}
-        r=self.client.post('/api/raices/comparar',json=datos).get_json()
-        self.assertFalse(any(x['convergencia'] for x in r['comparacion']))
     def test_no_revela_raiz_exploratoria(self):
         for ruta in ['/api/raices/evaluar','/api/raices/buscar-limites']:
             r=self.client.post(ruta,json=VALIDOS[ruta]).get_json()
@@ -82,25 +73,12 @@ class API(unittest.TestCase):
     def test_error_por_ecuacion(self):
         r=self.client.post('/calcular',json={'m':2,'n':1,'ecuaciones':['x1=1','basura=2']})
         self.assertEqual(r.status_code,400);self.assertIn('Ecuación 2',r.get_json()['error'])
-    def test_modo_rapido(self):
-        A=[[float(i==j) for j in range(20)] for i in range(20)]
-        for operacion in ['inversa','determinante','multiplicacion','suma','escalar']:
-            with self.subTest(operacion=operacion):
-                r=self.client.post('/api/matrices',json={'A':A,'B':A,'c':2,'operacion':operacion,'metodo':'lu'})
-                self.assertEqual(r.status_code,200,r.text)
-                datos=r.get_json();self.assertEqual(datos['modo'],'rapido');self.assertEqual(datos['pasos'],[])
-                self.assertIn('comprobacion',datos);self.assertLess(len(r.data),100000)
     def test_rectangular_grande(self):
         r=self.client.post('/api/matrices',json={'operacion':'multiplicacion','A':[[2]],'B':[[1]*50]})
         self.assertEqual(r.status_code,200)
-        self.assertEqual(r.get_json()['modo'],'rapido')
+        self.assertNotIn('modo',r.get_json()); self.assertTrue(r.get_json()['pasos'])
         self.assertEqual(r.get_json()['resultado'],[[2]*50])
 
-    def test_modo_explicito(self):
-        r=self.client.post('/api/matrices',json={**VALIDOS['/api/matrices'],'modo':'rapido'})
-        self.assertEqual(r.get_json()['modo'],'rapido')
-        A=[[1]*7 for _ in range(7)]
-        self.assertEqual(self.client.post('/api/matrices',json={'A':A,'B':A,'operacion':'suma','modo':'educativo'}).status_code,400)
     def test_json_anidado(self):
         r=self.client.post('/calcular',data='{"x":'+ '['*1100 + '0' + ']'*1100 + '}',content_type='application/json')
         self.assertEqual(r.status_code,400)

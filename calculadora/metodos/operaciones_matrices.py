@@ -1,5 +1,5 @@
 from ..utilidades.validacion import matriz, numero
-from ..utilidades.recursos import Registro, modo_educativo, Presupuesto
+from ..utilidades.recursos import Registro, Presupuesto
 
 
 def validar_formato_matriz(valor, nombre_matriz="Matriz"):
@@ -28,14 +28,13 @@ def suma_matrices(A, B):
     if filas_A != filas_B or cols_A != cols_B:
         return None, [], [], f"Error: No se pueden sumar. Dimensiones incompatibles."
         
-    educativo = modo_educativo(max(len(A), len(A[0]), len(B), len(B[0])))
     presupuesto = Presupuesto()
     resultado = []
     pasos = [
         {"mensaje": "Matriz A inicial:", "matriz": [fila[:] for fila in A]},
         {"mensaje": "Matriz B inicial:", "matriz": [fila[:] for fila in B]}
     ]
-    pasos_ecuaciones = Registro(["Desglose de Suma: C[i,j] = A[i,j] + B[i,j]"], activo=educativo)
+    pasos_ecuaciones = Registro(["Desglose de Suma: C[i,j] = A[i,j] + B[i,j]"])
     
     for i in range(filas_A):
         presupuesto.revisar()
@@ -68,14 +67,13 @@ def resta_matrices(A, B):
     if filas_A != filas_B or cols_A != cols_B:
         return None, [], [], f"Error: No se pueden restar. Dimensiones incompatibles."
         
-    educativo = modo_educativo(max(len(A), len(A[0]), len(B), len(B[0])))
     presupuesto = Presupuesto()
     resultado = []
     pasos = [
         {"mensaje": "Matriz A inicial:", "matriz": [fila[:] for fila in A]},
         {"mensaje": "Matriz B inicial:", "matriz": [fila[:] for fila in B]}
     ]
-    pasos_ecuaciones = Registro(["Desglose de Resta: C[i,j] = A[i,j] - B[i,j]"], activo=educativo)
+    pasos_ecuaciones = Registro(["Desglose de Resta: C[i,j] = A[i,j] - B[i,j]"])
     
     for i in range(filas_A):
         presupuesto.revisar()
@@ -103,11 +101,10 @@ def mult_escalar_matriz(c, A):
         return None, [], [], "Error: El escalar a multiplicar debe ser un número."
 
     numero(c, "c")
-    educativo = modo_educativo(max(len(A), len(A[0])))
     presupuesto = Presupuesto()
     resultado = []
     pasos = [{"mensaje": f"Matriz A original (Escalar c = {c}):", "matriz": [fila[:] for fila in A]}]
-    pasos_ecuaciones = Registro([f"Desglose de Multiplicación Escalar: C[i,j] = {c} * A[i,j]"], activo=educativo)
+    pasos_ecuaciones = Registro([f"Desglose de Multiplicación Escalar: C[i,j] = {c} * A[i,j]"])
     
     for i in range(len(A)):
         presupuesto.revisar()
@@ -140,14 +137,13 @@ def multiplicacion_matrices(A, B):
     if cols_A != filas_B:
         return None, [], [], f"Error matemático: Columnas de A ({cols_A}) no coinciden con filas de B ({filas_B})."
         
-    educativo = modo_educativo(max(len(A), len(A[0]), len(B), len(B[0])))
     presupuesto = Presupuesto()
     resultado = []
     pasos = [
         {"mensaje": "Matriz A (Factor izquierdo):", "matriz": [fila[:] for fila in A]},
         {"mensaje": "Matriz B (Factor derecho):", "matriz": [fila[:] for fila in B]}
     ]
-    pasos_ecuaciones = Registro(["Ecuaciones de Producto Punto (Fila de A · Columna de B):"], activo=educativo)
+    pasos_ecuaciones = Registro(["Ecuaciones de Producto Punto (Fila de A · Columna de B):"])
     
     for i in range(filas_A):
         presupuesto.revisar()

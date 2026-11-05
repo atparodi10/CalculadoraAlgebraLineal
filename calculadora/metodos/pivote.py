@@ -2,17 +2,16 @@
 from ..utilidades.matrices import clonar_matriz
 from ..utilidades.ecuaciones import matriz_a_ecuaciones
 from ..utilidades.sistemas import validar_sistema, parametrizar
-from ..utilidades.recursos import modo_educativo, Registro, Presupuesto
+from ..utilidades.recursos import Registro, Presupuesto
 
 def resolver_pivote(A, b, m, n):
     validar_sistema(A, b, m, n)
-    educativo = modo_educativo(max(m, n))
     presupuesto = Presupuesto()
     # Construye [A | b]: copia cada fila de A y añade el término independiente.
     # En M[i][j], i identifica la fila y j la columna; M[i][n] es el valor a la derecha
     # del '='. Los índices internos empiezan en 0 y los mensajes al usuario en 1.
     M = [A[i][:] + [b[i]] for i in range(m)]
-    pasos = []
+    pasos = Registro(limite=1000)
     # columnas_pivote conserva números de columna desde 1 para compararlos con x1..xn.
     # pivotes_pos conserva pares (fila, columna) desde 0 para operar con las listas.
     # No son dos matrices: son dos registros del lugar donde se encontraron pivotes.
@@ -26,8 +25,7 @@ def resolver_pivote(A, b, m, n):
     # externa (cierre o closure). No devuelve datos: añade un diccionario a pasos.
     # clonar_matriz evita que las siguientes operaciones alteren el historial.
     def guardar_paso(mensaje, matriz_actual):
-        if educativo:
-            pasos.append({"mensaje": mensaje, "matriz": clonar_matriz(matriz_actual)})
+        pasos.append({"mensaje": mensaje, "matriz": clonar_matriz(matriz_actual)})
 
     guardar_paso("Matriz aumentada inicial:", M)
     # Escalar cada fila conserva el sistema y evita declarar cero un pivote

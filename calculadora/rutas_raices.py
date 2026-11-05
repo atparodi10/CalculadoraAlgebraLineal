@@ -38,26 +38,6 @@ def api_raices():
     return jsonify(_calcular(datos, datos.get('metodo')))
 
 
-def api_comparar():
-    """Se ejecuta únicamente tras una acción explícita del usuario."""
-    datos = request.get_json(); _funcion(datos)
-    error = numero(datos.get('error_esperado'), 'error_esperado')
-    if not 0 < error <= 100: raise ValueError('Ea debe estar entre 0 y 100 por ciento.')
-    entero(datos.get('max_iter', 100), 'max_iter', 1, 1000)
-    resultados = []
-    for metodo in METODOS:
-        try:
-            resultado = _calcular(datos, metodo)
-            resultado.pop('pasos', None)
-            resultado['estado'] = 'Convergió' if resultado['convergencia'] else 'No convergió'
-        except ValueError as error:
-            resultado = {'metodo': metodo, 'convergencia': False, 'resultado': None,
-                         'estado': 'No aplicable', 'mensaje': str(error), 'iteraciones': 0,
-                         'residuo': None, 'error_final': None, 'tiempo_s': None}
-        resultados.append(resultado)
-    return jsonify({'comparacion': resultados})
-
-
 def _rango(datos):
     return (numero(datos.get('x_min', -10), 'x_min'), numero(datos.get('x_max', 10), 'x_max'))
 

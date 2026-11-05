@@ -14,7 +14,7 @@ function backend(url,datos,method='POST') {
     if(r.status!==0)throw Error(r.stderr);
     return JSON.parse(r.stdout);
 }
-let almacenamiento=new Map(),descargas=[],clipboard='',impresiones=0;
+let almacenamiento=new Map();
 async function pagina(ruta) {
     const errores=[],etiquetas=[];
     const html=backend(ruta,null,'GET').body;
@@ -28,10 +28,6 @@ async function pagina(ruta) {
     w.HTMLElement.prototype.getBoundingClientRect=function(){return {width:800,height:400,left:0,top:0,right:800,bottom:400};};
     w.HTMLCanvasElement.prototype.getContext=()=>new Proxy({measureText:t=>({width:String(t).length*7}),fillText:t=>etiquetas.push(String(t))},{get:(o,k)=>o[k]||(()=>{}),set:(o,k,v)=>(o[k]=v,true)});
     w.ResizeObserver=class {observe(){}disconnect(){}};
-    w.URL.createObjectURL=blob=>{descargas.push(blob);return 'blob:tanix';};w.URL.revokeObjectURL=()=>{};
-    w.HTMLAnchorElement.prototype.click=function(){};
-    w.print=()=>impresiones++;
-    Object.defineProperty(w.navigator,'clipboard',{value:{writeText:async t=>{clipboard=t;}}});
     w.fetch=async(url,options={})=>{
         if(options.signal?.aborted)throw new DOMException('Cancelado','AbortError');
         const r=backend(url,options.body?JSON.parse(options.body):null,options.method||'GET');
@@ -52,89 +48,73 @@ function poner(p,id,valor) {
     const e=p.d.getElementById(id);assert.ok(e,'Falta '+id);e.value=valor;e.dispatchEvent(new p.w.Event('input',{bubbles:true}));e.dispatchEvent(new p.w.Event('change',{bubbles:true}));
 }
 function click(p,id){const e=p.d.getElementById(id);assert.ok(e,'Falta '+id);e.click();}
-function historial(){return JSON.parse(almacenamiento.get('lineal-tanix.historial.v1')||'[]');}
 (async()=>{
     let p=await pagina('/raices');
     poner(p,'raices-funcion-raw','x^2=2');poner(p,'raices-xl','0');poner(p,'raices-xu','2');poner(p,'raices-error','0.001');
     await new Promise(r=>setTimeout(r,450));
     ok(!p.etiquetas.includes('raíz'),'La gráfica revela una raíz antes del cálculo');
-    eq(historial().length,0,'No guardar la exploración');
     click(p,'raices-submit');await tick();
-    ok(!p.d.getElementById('raices-results').classList.contains('hidden'),'No aparece resultado de raíces');
-    ok(p.d.getElementById('raices-results').textContent.includes('1.414214'),'Raíz visible incorrecta');
+    ok(!p.d.getElementById('raices-results').classList.contains('hidden'));
+    ok(p.d.getElementById('raices-results').textContent.includes('1.41421356'));
     ok(p.etiquetas.includes('raíz'),'Falta marcador después del cálculo');
-    eq(historial().length,1);eq(historial()[0].datos.funcion,'x^2=2');
-    ok(historial()[0].resultado.convergencia);ok(!p.d.getElementById('tanix-csv').disabled);
-    poner(p,'tanix-precision','10');
-    ok(p.d.getElementById('raices-results').textContent.includes('1.41421356'),'La precisión no cambió');
-    const valorOriginal=historial()[0].resultado.resultado;
-    poner(p,'tanix-precision','4');eq(historial()[0].resultado.resultado,valorOriginal,'La precisión alteró el dato');
-    click(p,'tanix-csv');eq(descargas.length,1);
-    const csv=await new Promise(resolve=>{const lector=new p.w.FileReader();lector.onload=()=>resolve(lector.result);lector.readAsText(descargas[0]);});
-    ok(csv.includes('Lineal Tanix'));ok(csv.includes('x^2=2'));ok(csv.includes('error_absoluto'));ok(csv.includes('iteracion'));
-    click(p,'tanix-copiar');await tick();ok(clipboard.includes('Lineal Tanix'));ok(clipboard.includes('x^2=2'));ok(clipboard.includes('residuo'));
-    click(p,'tanix-imprimir');eq(impresiones,1);ok(p.d.getElementById('tanix-informe').textContent.includes('Lineal Tanix'));
-    p.etiquetas.length=0;
-    poner(p,'raices-funcion-raw','x^2-4');ok(!p.etiquetas.includes('raíz'),'El marcador debe desaparecer al editar');ok(p.d.getElementById('raices-results').classList.contains('hidden'));ok(p.d.getElementById('tanix-csv').disabled);
-    p.d.querySelector('#tanix-historial-lista button').click();await tick();eq(p.d.getElementById('raices-funcion-raw').value,'x^2=2');
-    ok(p.d.getElementById('raices-results').classList.contains('hidden'),'Restaurar no debe calcular');
-    p.d.querySelectorAll('#tanix-historial-lista button')[1].click();await tick();eq(historial().length,2,'Repetir no guardó el nuevo cálculo');
-    click(p,'tanix-comparar');await tick();
-    eq(p.d.querySelectorAll('#tanix-comparacion-resultados tr').length,5);eq(historial()[0].ruta,'/api/raices/comparar');
-    ok(p.d.getElementById('tanix-comparacion-resultados').textContent.includes('Convergió'));
-    poner(p,'raices-funcion-raw','<img src=x onerror=alert(1)>');await tick();eq(p.d.querySelectorAll('#math-preview-render img').length,0);
+    ok(p.d.getElementById('raices-results').textContent.includes('Residuo'));
+    p.etiquetas.length=0;poner(p,'raices-funcion-raw','x^2-4');
+    ok(!p.etiquetas.includes('raíz'));ok(p.d.getElementById('raices-results').classList.contains('hidden'));
+    poner(p,'raices-funcion-raw','<img src=x onerror=alert(1)>');
+    eq(p.d.querySelectorAll('#math-preview-render img').length,0);
     eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
 
     p=await pagina('/matrices');poner(p,'mat-a','3');click(p,'btn-mat-inversa');click(p,'btn-perf-proceder');await tick();
-    ok(p.d.getElementById('mat-results').textContent.includes('0.3333'),'Inversa no presentada');
-    eq(historial()[0].datos.operacion,'inversa');eq(historial()[0].resultado.resultado[0][0],1/3);
-    poner(p,'tanix-precision','10');ok(p.d.getElementById('mat-results').textContent.includes('0.3333333333'));
-    poner(p,'mat-a','2 3 5\n7 11 13\n17 19 23');click(p,'btn-mat-determinante');click(p,'det-met-sarrus');click(p,'btn-det-calcular');await tick();
-    if(p.d.getElementById('btn-perf-proceder')){click(p,'btn-perf-proceder');await tick();}
-    ok(p.d.getElementById('mat-results').textContent.includes('-78'),'Determinante incorrecto');
-    ok(p.d.querySelectorAll('.sarrus-grid__cell').length>0 || p.d.getElementById('mat-results').textContent.includes('663'),'Falta visual Sarrus');
-    ok(!p.d.getElementById('mat-results').textContent.includes('<span'),'Se imprimió HTML en lugar de números');
+    ok(p.d.getElementById('mat-results').textContent.includes('0.3333'));
+    poner(p,'mat-a','2 3 5\n7 11 13\n17 19 23');click(p,'btn-mat-determinante');click(p,'det-met-sarrus');click(p,'btn-det-calcular');click(p,'btn-perf-proceder');await tick();
+    ok(p.d.getElementById('mat-results').textContent.includes('-78'));
+    ok(p.d.querySelectorAll('.sarrus-grid__cell').length>0);
+    ok(p.d.querySelector('.sarrus-svg-overlay marker path[fill="#10b981"]'));
+    ok(p.d.querySelector('.sarrus-svg-overlay marker path[fill="#ef4444"]'));
+    const identidad=n=>Array.from({length:n},(_,i)=>Array.from({length:n},(_,j)=>Number(i===j)).join(' ')).join('\n');
+    poner(p,'mat-a',identidad(10));click(p,'btn-mat-determinante');
+    eq(p.d.getElementById('det-met-cofactores').disabled,false,'Cofactores 10×10 debe estar habilitado');
+    click(p,'det-met-cofactores');click(p,'btn-det-calcular');click(p,'btn-perf-proceder');await tick();
+    ok(p.d.querySelector('.det-resultado-final__valor').textContent.includes('1'));
+    poner(p,'mat-a',identidad(11));click(p,'btn-mat-determinante');
+    eq(p.d.getElementById('det-met-cofactores').disabled,true);
     eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
 
     p=await pagina('/ecuaciones');poner(p,'input-m','1');poner(p,'input-n','1');click(p,'btn-generate');click(p,'btn-perf-proceder');
     poner(p,'ecuacion-1','x1+x1=2');click(p,'btn-solve');await tick();
-    ok(p.d.getElementById('results').textContent.includes('Solución Única'), p.d.getElementById('results').innerHTML+' ALERT '+p.d.getElementById('ui-alert').textContent+' ERR '+p.errores.join('|'));ok(p.d.getElementById('results').textContent.includes('Correcto'));
-    const antes=historial().length;p.d.querySelectorAll('#tanix-historial-lista button')[1].click();await tick();eq(historial().length,antes+1);
+    ok(p.d.getElementById('results').textContent.includes('Solución Única'));
+    ok(p.d.getElementById('results').textContent.includes('Correcto'));
+    poner(p,'ecuacion-1','3x1=1');click(p,'btn-solve');await tick();
+    ok(p.d.getElementById('results').textContent.includes('Correcto'),'Verificación con solución sin redondear');
     eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
 
     p=await pagina('/vectores');poner(p,'vec-dim','2');poner(p,'vec-u','1 2');poner(p,'vec-v','3 4');click(p,'btn-vec-suma');await tick();
-    eq(historial()[0].ruta,'/api/vectores');eq(historial()[0].resultado.resultado[0],4);
+    ok(p.d.getElementById('vec-results').textContent.includes('4'));
+    ok(p.d.getElementById('vec-results').textContent.includes('6'));
     eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
 
     p=await pagina('/conversion');poner(p,'conversion-number','25.5');poner(p,'conversion-origen','10');poner(p,'conversion-destino','2');
-    click(p,'conversion-submit');await tick();eq(historial()[0].resultado.resultado,'11001.1');
-    p.d.querySelectorAll('#tanix-historial-lista button')[1].click();await tick();eq(historial()[0].ruta,'/convertir');
+    click(p,'conversion-submit');await tick();ok(p.d.getElementById('conversion-results').textContent.includes('11001.1'));
+    eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
+    p=await pagina('/romanos');poner(p,'romanos-input','1994');click(p,'romanos-submit');await tick();
+    ok(p.d.getElementById('romanos-results').textContent.includes('MCMXCIV'));
     eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
 
-    p=await pagina('/romanos');poner(p,'romanos-input','1994');click(p,'romanos-submit');await tick();
-    eq(historial()[0].ruta,'/api/romanos');eq(historial()[0].resultado.resultado,'MCMXCIV');
-    const size=historial().length;p.d.querySelectorAll('#tanix-historial-lista button')[2].click();eq(historial().length,size-1);
-    click(p,'tanix-limpiar');eq(historial().length,0);
-    eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
     p=await pagina('/matrices');poner(p,'mat-a','1');poner(p,'mat-b','2');
-    let resolver;
-    const fetchReal=p.w.fetch;
+    let resolver;const fetchReal=p.w.fetch;
     p.w.fetch=(url,opciones)=>new Promise(resolve=>{resolver=()=>fetchReal(url,{...opciones,signal:null}).then(resolve);});
-    click(p,'btn-mat-suma');click(p,'btn-perf-proceder');await tick();
-    poner(p,'mat-a','9');
-    // Respuesta tardía aunque el transporte ignore AbortSignal.
-    p.w.fetch=fetchReal;
-    // Entrega un Response válido ya obtenido; Tanix debe rechazar la revisión antigua.
-    // El transporte de prueba original también observa cancelación.
-    try { resolver(); } catch {}
-    await tick();eq(historial().length,0,'Se guardó una respuesta obsoleta');
-    p.dom.window.close();
-    p=await pagina('/vectores');
-    for(let i=0;i<35;i++)p.w.Tanix.registrar('/api/vectores',{operacion:'suma',n:1,u:[i],v:[1]},{resultado:[i+1]},[]);
-    eq(historial().length,30,'El historial debe estar acotado');
-    p.w.localStorage.setItem=()=>{throw Error('Sin cuota');};
-    p.w.Tanix.registrar('/api/vectores',{operacion:'suma',n:1,u:[1],v:[1]},{resultado:[2]},[]);
-    ok(p.d.getElementById('tanix-aviso').textContent.includes('No se pudo guardar'));
-    p.dom.window.close();
+    click(p,'btn-mat-suma');click(p,'btn-perf-proceder');await tick();poner(p,'mat-a','9');
+    p.w.fetch=fetchReal;resolver();await tick();
+    ok(p.d.getElementById('mat-results').classList.contains('hidden'),'Descartar respuesta de entradas anteriores');
+    eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
+
+    for(const ruta of ['/raices','/matrices','/ecuaciones','/vectores','/conversion','/romanos']) {
+        p=await pagina(ruta);
+        eq(p.d.querySelectorAll('[id^="tanix-"]').length,0,'No deben existir controles de funciones retiradas');
+        eq(p.d.querySelectorAll('script[src*="herramientas"],link[href*="herramientas"]').length,0);
+        eq(p.w.Tanix,undefined);
+        eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
+    }
+    ok(Array.from(almacenamiento.keys()).every(k=>k==='lineal-tanix-theme'),'No guardar operaciones ni precisión en localStorage');
     console.log(`DOM: ${comprobaciones} comprobaciones superadas; 0 fallos.`);
 })().catch(e=>{console.error(e);process.exitCode=1;});

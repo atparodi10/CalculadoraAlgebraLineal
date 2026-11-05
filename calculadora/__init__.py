@@ -9,7 +9,7 @@ from .rutas import (
 )
 from .rutas_conversion import convertir
 from .rutas_romanos import page_romanos, api_romanos
-from .rutas_raices import page_raices, api_raices, api_evaluar_rango, api_buscar_limites, api_comparar
+from .rutas_raices import page_raices, api_raices, api_evaluar_rango, api_buscar_limites
 
 # Flask(__name__) toma este paquete como referencia para localizar templates/ y
 # static/. Por eso ambas carpetas están dentro de calculadora.
@@ -37,7 +37,6 @@ app.add_url_rule('/api/romanos', view_func=api_romanos, methods=['POST'])
 app.add_url_rule('/api/raices', view_func=api_raices, methods=['POST'])
 app.add_url_rule('/api/raices/evaluar', view_func=api_evaluar_rango, methods=['POST'])
 app.add_url_rule('/api/raices/buscar-limites', view_func=api_buscar_limites, methods=['POST'])
-app.add_url_rule('/api/raices/comparar', view_func=api_comparar, methods=['POST'])
 
 # Límite de cuerpo antes de leer JSON y errores controlados en todas las APIs.
 from flask import jsonify, request, g

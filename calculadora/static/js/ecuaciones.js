@@ -35,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     btnGenerate.addEventListener('click', () => {
-        m = parseInt(document.getElementById('input-m').value);
-        n = parseInt(document.getElementById('input-n').value);
+        m = Number(document.getElementById('input-m').value);
+        n = Number(document.getElementById('input-n').value);
 
-        if (m <= 0 || n <= 0 || m > 50 || n > 50 || isNaN(m) || isNaN(n)) {
-            mostrarAlerta('Las dimensiones deben estar entre 1 y 50.', 'error');
+        if (!Number.isInteger(m) || !Number.isInteger(n) || m <= 0 || n <= 0 || m > 50 || n > 50) {
+            mostrarAlerta('Las dimensiones deben ser enteros entre 1 y 50.', 'error');
             return;
         }
 
@@ -167,13 +167,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (firstInput) firstInput.focus();
     }
 
-    document.addEventListener('tanix:restaurar', evento => {
-        if (evento.detail.ruta !== '/calcular') return;
-        m=evento.detail.datos.m; n=evento.detail.datos.n;
-        generarCamposEcuaciones();
-        equationList.querySelectorAll('input').forEach((input,i)=>input.value=evento.detail.datos.ecuaciones[i]);
-    });
-
     btnSolve.addEventListener('click', async () => {
         const metodo = document.getElementById('select-method').value;
         const ecuaciones = [];
@@ -214,7 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnSolve.innerHTML = '<span class="spinner"></span> Procesando…';
 
         try {
-            const response = await Tanix.solicitar('/calcular', {
+            const response = await Solicitudes.enviar('/calcular', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ m, n, metodo, ecuaciones })
@@ -240,7 +233,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderResults(data) {
         resultsSection.innerHTML = '';
         resultsSection.classList.remove('hidden');
-        Tanix.mostrarResumen(resultsSection,data);
 
         data.pasos.forEach((paso, index) => {
             const stepDiv = document.createElement('div');
@@ -251,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 matrixHTML += '<div class="matrix__row">';
                 row.forEach((val, idx) => {
                     const cellClass = (idx === row.length - 1) ? 'matrix__cell matrix__cell--result' : 'matrix__cell';
-                    matrixHTML += `<div class="${cellClass}">${`<span data-tanix-numero="${val}">${Tanix.fmt(val)}</span>`}</div>`;
+                    matrixHTML += `<div class="${cellClass}">${val.toFixed(2)}</div>`;
                 });
                 matrixHTML += '</div>';
             });
@@ -265,15 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         classDiv.className = 'results__classification';
         classDiv.textContent = data.tipo_sistema;
         resultsSection.appendChild(classDiv);
-        if (data.soluciones?.length) {
-            const soluciones=document.createElement('div'); soluciones.className='results__step';
-            data.soluciones.forEach((valor,i)=>{
-                const p=document.createElement('p'); p.append(`x${i+1} = `);
-                const numero=document.createElement('span'); numero.dataset.tanixNumero=valor; numero.textContent=Tanix.fmt(valor);
-                p.append(numero); soluciones.append(p);
-            });
-            resultsSection.append(soluciones);
-        }
 
         if (data.pasos_ecuaciones && data.pasos_ecuaciones.length > 0) {
             const eqDiv = document.createElement('div');

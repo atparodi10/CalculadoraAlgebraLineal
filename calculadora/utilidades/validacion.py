@@ -93,12 +93,3 @@ def validar_peticion():
         if isinstance(datos.get('numero'), str): texto(datos['numero'], 'numero', 32)
         elif type(datos.get('numero')) is not int: raise ValueError('numero debe ser un entero o texto.')
         texto(datos.get('direccion'), 'direccion', 30)
-    if datos.get('modo') == 'educativo':
-        if ruta == '/calcular' and max(datos['m'], datos['n']) > 6: raise ValueError('El modo educativo admite dimensiones hasta 6.')
-        if ruta == '/api/matrices':
-            tamano = max(len(datos['A']), len(datos['A'][0]))
-            if datos['operacion'] in ('suma', 'resta', 'multiplicacion'):
-                tamano = max(tamano, len(datos['B']), len(datos['B'][0]))
-            if tamano > 6: raise ValueError('El modo educativo admite dimensiones hasta 6.')
-    if 'modo' in datos and datos['modo'] not in ('auto', 'educativo', 'rapido'):
-        raise ValueError('El modo debe ser auto, educativo o rapido.')

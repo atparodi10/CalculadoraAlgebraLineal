@@ -14,6 +14,15 @@
 document.addEventListener('DOMContentLoaded', () => {
     'use strict';
 
+    // Presentación fija: conserva los cálculos completos en el backend.
+    function formatearNumero(valor) {
+        if (valor === null || valor === undefined) return '—';
+        if (typeof valor !== 'number') return String(valor);
+        if (!Number.isFinite(valor)) return 'No definido';
+        if (valor !== 0 && (Math.abs(valor) < 1e-8 || Math.abs(valor) >= 1e12)) return valor.toExponential(8);
+        return String(Number(valor.toFixed(8)));
+    }
+
     // =========================================
     // REFERENCIAS DOM
     // =========================================
@@ -62,11 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let debounceTimer = null;
     let fetchAbort = null;        // AbortController para fetch de gráfica
 
-    let validacionAbort = null, limitesAbort = null, calculoAbort = null, compararAbort = null;
+    let validacionAbort = null, limitesAbort = null, calculoAbort = null;
     let graficaPeticion = 0, validacionPeticion = 0, limitesPeticion = 0;
-    let ultimoResultado = null, ultimaComparacion = null;
-    const compararBtn = document.getElementById('tanix-comparar');
-    const comparacionResultados = document.getElementById('tanix-comparacion-resultados');
 
     // Vista de la gráfica (coordenadas matemáticas)
     let viewXMin = -10, viewXMax = 10;
@@ -86,10 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     function invalidarResultado() {
         revision += 1;
-        Tanix.invalidar();
-        [validacionAbort, limitesAbort, calculoAbort, compararAbort].forEach(c => c?.abort());
-        ultimoResultado = null; ultimaComparacion = null;
-        comparacionResultados.replaceChildren();
+        [validacionAbort, limitesAbort, calculoAbort].forEach(c => c?.abort());
         rootResult = null;
         alertBox.classList.add('hidden');
         warningBox.classList.add('hidden');
@@ -1166,7 +1169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         Raíz aproximada:
                     </span>
                     <span style="font-size: 1.8rem; letter-spacing: 0.02em; font-family: 'Fira Code', monospace;">
-                        x ≈ ${Tanix.fmt(data.resultado)}
+                        x ≈ ${formatearNumero(data.resultado)}
                     </span>
                     <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-top: 8px;">
                         Iteraciones: ${data.iteraciones} &nbsp;|&nbsp; Convergencia: ${esExito ? 'Sí ✓' : 'No ✗'}
@@ -1175,8 +1178,8 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
-        html += `<p>Residuo |f(x)|: ${Tanix.fmt(data.residuo)} · Error absoluto: ${Tanix.fmt(data.error_absoluto)} · Ea relativo: ${Tanix.fmt(data.error_final)}% · Tiempo: ${Tanix.fmt(data.tiempo_s)} s</p>`;
-        html += `<p>Tolerancia Ea: ${Tanix.fmt(data.tolerancia_porcentual)}%. ${escapeHtml(data.criterio_residuo || '')}</p>`;
+        html += `<p>Residuo |f(x)|: ${formatearNumero(data.residuo)} · Error absoluto: ${formatearNumero(data.error_absoluto)} · Ea relativo: ${formatearNumero(data.error_final)}% · Tiempo: ${formatearNumero(data.tiempo_s)} s</p>`;
+        html += `<p>Tolerancia Ea: ${formatearNumero(data.tolerancia_porcentual)}%. ${escapeHtml(data.criterio_residuo || '')}</p>`;
         if (data.advertencias?.length) html += `<p>${data.advertencias.map(escapeHtml).join(' ')}</p>`;
         // Tabla de iteraciones
         if (data.pasos && data.pasos.length > 0) {
@@ -1234,13 +1237,13 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `
                 <tr class="${esUltimo ? 'raices-table__row--final' : ''}">
                     <td>${p.iteracion}</td>
-                    <td>${Tanix.fmt(p.xl)}</td>
-                    <td>${Tanix.fmt(p.xu)}</td>
-                    <td><strong>${Tanix.fmt(p.xr)}</strong></td>
-                    <td>${Tanix.fmt(p.f_xl)}</td>
-                    <td>${Tanix.fmt(p.f_xu)}</td>
-                    <td>${Tanix.fmt(p.f_xr)}</td>
-                    <td>${Tanix.fmt(p.ea)}%</td>
+                    <td>${formatearNumero(p.xl)}</td>
+                    <td>${formatearNumero(p.xu)}</td>
+                    <td><strong>${formatearNumero(p.xr)}</strong></td>
+                    <td>${formatearNumero(p.f_xl)}</td>
+                    <td>${formatearNumero(p.f_xu)}</td>
+                    <td>${formatearNumero(p.f_xr)}</td>
+                    <td>${formatearNumero(p.ea)}%</td>
                 </tr>
             `;
         });
@@ -1270,11 +1273,11 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `
                 <tr class="${esUltimo ? 'raices-table__row--final' : ''}">
                     <td>${p.iteracion}</td>
-                    <td>${Tanix.fmt(p.xi)}</td>
-                    <td>${Tanix.fmt(p.f_xi)}</td>
-                    <td>${Tanix.fmt(p.f_prima_xi)}</td>
-                    <td><strong>${Tanix.fmt(p.xi_nuevo)}</strong></td>
-                    <td>${Tanix.fmt(p.ea)}%</td>
+                    <td>${formatearNumero(p.xi)}</td>
+                    <td>${formatearNumero(p.f_xi)}</td>
+                    <td>${formatearNumero(p.f_prima_xi)}</td>
+                    <td><strong>${formatearNumero(p.xi_nuevo)}</strong></td>
+                    <td>${formatearNumero(p.ea)}%</td>
                 </tr>
             `;
         });
@@ -1305,12 +1308,12 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `
                 <tr class="${esUltimo ? 'raices-table__row--final' : ''}">
                     <td>${p.iteracion}</td>
-                    <td>${Tanix.fmt(p.x_i_menos1)}</td>
-                    <td>${Tanix.fmt(p.x_i)}</td>
-                    <td>${Tanix.fmt(p.f_i_menos1)}</td>
-                    <td>${Tanix.fmt(p.f_i)}</td>
-                    <td><strong>${Tanix.fmt(p.x_nuevo)}</strong></td>
-                    <td>${Tanix.fmt(p.ea)}%</td>
+                    <td>${formatearNumero(p.x_i_menos1)}</td>
+                    <td>${formatearNumero(p.x_i)}</td>
+                    <td>${formatearNumero(p.f_i_menos1)}</td>
+                    <td>${formatearNumero(p.f_i)}</td>
+                    <td><strong>${formatearNumero(p.x_nuevo)}</strong></td>
+                    <td>${formatearNumero(p.ea)}%</td>
                 </tr>
             `;
         });
@@ -1355,8 +1358,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 rootResult = data;
             }
 
-            ultimoResultado = {data, metodo: datos.metodo};
-            Tanix.registrar('/api/raices', datos, data);
             renderizarResultado(data, datos.metodo);
             dibujarGrafica();   // Redibuja con marcador de raíz si aplica
 
@@ -1373,41 +1374,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function dibujarComparacion(data) {
-        comparacionResultados.replaceChildren();
-        const tabla=document.createElement('table');tabla.className='raices-table';
-        const encabezado=document.createElement('tr');
-        ['Método','Raíz aproximada','Iteraciones','Ea (%)','Residuo','Estado','Tiempo (s)'].forEach(t=>{const th=document.createElement('th');th.scope='col';th.textContent=t;encabezado.append(th);});
-        tabla.append(encabezado);
-        for (const r of data.comparacion) {
-            const tr=document.createElement('tr');
-            [r.metodo,Tanix.fmt(r.resultado),r.iteraciones,Tanix.fmt(r.error_final),Tanix.fmt(r.residuo),r.estado,Tanix.fmt(r.tiempo_s)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});
-            tr.title=r.mensaje; tabla.append(tr);
-            if (!r.convergencia) { const aviso=document.createElement('tr');const td=document.createElement('td');td.colSpan=7;td.textContent=r.mensaje;aviso.append(td);tabla.append(aviso); }
-        }
-        comparacionResultados.append(tabla);
-    }
-    compararBtn.addEventListener('click', async()=>{
-        invalidarResultado();
-        const actual=revision;
-        const numeroCampo=id=>{ const input=document.getElementById(id);return input.value.trim()==='' ? null : Number(input.value); };
-        const datos={funcion:funcionInput.value.trim(),error_esperado:Number(errorInput.value),max_iter:Number(maxIterInput.value),
-            xl:numeroCampo('tanix-comparar-xl'),xu:numeroCampo('tanix-comparar-xu'),x0:numeroCampo('tanix-comparar-x0'),x_menos1:numeroCampo('tanix-comparar-xm1')};
-        compararAbort=new AbortController();compararBtn.disabled=true;
-        try {
-            const response=await fetch('/api/raices/comparar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(datos),signal:compararAbort.signal});
-            const data=await response.json();if(actual!==revision)return;
-            if(!response.ok)throw new Error(data.error || 'No se pudo comparar.');
-            ultimaComparacion=data;dibujarComparacion(data);Tanix.registrar('/api/raices/comparar',datos,data);
-        } catch(error) {if(error.name!=='AbortError' && actual===revision)mostrarError(error.message);}
-        finally {compararBtn.disabled=false;}
-    });
-    document.addEventListener('tanix:precision',()=>{
-        if(ultimoResultado)renderizarResultado(ultimoResultado.data,ultimoResultado.metodo);
-        if(ultimaComparacion)dibujarComparacion(ultimaComparacion);
-        dibujarGrafica();
-    });
-    document.querySelectorAll('#tanix-comparacion-panel input').forEach(input=>input.addEventListener('input',invalidarResultado));
     canvas.tabIndex=0;canvas.setAttribute('aria-label','Gráfica exploratoria: + y - para zoom, flechas para desplazar.');
     canvas.addEventListener('keydown',e=>{
         if(e.key==='+' || e.key==='='){e.preventDefault();zoomInBtn.click();}

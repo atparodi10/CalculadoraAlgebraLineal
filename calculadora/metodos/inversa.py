@@ -18,7 +18,7 @@ import math
 
 from .operaciones_matrices import validar_formato_matriz
 from ..utilidades.matrices import clonar_matriz
-from ..utilidades.recursos import modo_educativo, Registro, Presupuesto
+from ..utilidades.recursos import Registro, Presupuesto
 
 
 # --- Límites de protección ---
@@ -124,7 +124,6 @@ def inversa_matriz(A):
         return None, [], [], msj, None
 
     n = len(A)
-    educativo = modo_educativo(n)
     presupuesto = Presupuesto()
 
     # Verificar que la matriz sea cuadrada
@@ -164,8 +163,8 @@ def inversa_matriz(A):
         fila_aumentada = [float(x) for x in A[i]] + I_original[i][:]
         M.append(fila_aumentada)
 
-    pasos = []
-    pasos_ecuaciones = Registro(["Método: Eliminación de Gauss-Jordan sobre la matriz aumentada [A | I]"], activo=educativo)
+    pasos = Registro(limite=1000)
+    pasos_ecuaciones = Registro(["Método: Eliminación de Gauss-Jordan sobre la matriz aumentada [A | I]"])
 
     def extraer_A_actual(mat):
         """Extrae la parte izquierda (n×n) de la matriz aumentada."""
@@ -181,7 +180,6 @@ def inversa_matriz(A):
         Guarda ambas mitades por separado para que el frontend dibuje la
         aumentada con separación visual entre la parte de A y la de I.
         """
-        if not educativo: return
         snapshot = clonar_aumentada(matriz_actual)
         pasos.append({
             "mensaje": mensaje,
@@ -279,7 +277,7 @@ def inversa_matriz(A):
     TOLERANCIA = 1e-6
     verificacion_ok = True
     producto_resultado = []
-    verificacion_detalle = Registro(activo=educativo)  # Desglose celda a celda
+    verificacion_detalle = Registro()  # Desglose celda a celda
 
     pasos_ecuaciones.append(f"Verificación: A × A⁻¹ ≈ I  (tolerancia: {TOLERANCIA})")
 
@@ -289,7 +287,7 @@ def inversa_matriz(A):
         fila_producto = []
         for j in range(n):
             # Desarrollar la multiplicación fila×columna
-            terminos = Registro(activo=educativo)
+            terminos = Registro()
             suma = 0.0
             for k in range(n):
                 producto_parcial = A[i][k] * inversa_exacta[k][j]

@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submit.innerHTML = '<span class="spinner"></span> Convirtiendo…';
 
         try {
-            const response = await Tanix.solicitar('/convertir', {
+            const response = await Solicitudes.enviar('/convertir', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

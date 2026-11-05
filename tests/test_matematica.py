@@ -160,12 +160,6 @@ class Matrices(unittest.TestCase):
         LU=multiplicacion_matrices(final['L_final'],final['U_final'])[0]
         for i in range(3):
             for j in range(3): self.assertAlmostEqual(PA[i][j],LU[i][j],places=12)
-    def test_modo_grande(self):
-        A=[[float(i==j) for j in range(20)] for i in range(20)]
-        inv,pasos,eq,err,tiempo,ver=inversa_matriz(A)
-        self.assertEqual(inv,A); self.assertEqual(pasos,[]); self.assertTrue(ver['verificacion_ok'])
-        self.assertEqual(calcular_determinante(A,'lu')[0],1)
-        self.assertLess(len(calcular_determinante(A,'lu')[1]),3)
 
 class OtrosModulos(unittest.TestCase):
     def test_vectores(self):

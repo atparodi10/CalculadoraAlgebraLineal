@@ -17,11 +17,11 @@ import time
 import math
 
 from .operaciones_matrices import validar_formato_matriz
-from ..utilidades.recursos import modo_educativo, Registro, Presupuesto
+from ..utilidades.recursos import Registro, Presupuesto
 
 # --- Límites de protección ---
 LIMITE_DIMENSION_MAXIMA = 50
-LIMITE_COFACTORES = 6  # Cofactores recursivo es O(n!); limitar para evitar bloqueos
+LIMITE_COFACTORES = 10  # Cofactores recursivo es O(n!); limitar para evitar bloqueos
 
 
 def _obtener_info_ram_servidor():
@@ -109,8 +109,8 @@ def determinante_cofactores(A):
             f"Usa Factorización LU para matrices grandes."
         )
 
-    pasos = [{"mensaje": f"Matriz A original ({n}×{n}):", "matriz": [fila[:] for fila in A], "tipo": "matriz_original"}]
-    pasos_ecuaciones = [f"Método: Expansión de Laplace (Cofactores) — Matriz {n}×{n}"]
+    pasos = Registro([{ "mensaje": f"Matriz A original ({n}×{n}):", "matriz": [fila[:] for fila in A], "tipo": "matriz_original"}], limite=1000)
+    pasos_ecuaciones = Registro([f"Método: Expansión de Laplace (Cofactores) — Matriz {n}×{n}"])
 
     det, _ = _cofactores_recursivo(A, pasos, pasos_ecuaciones, nivel=0)
 
@@ -126,12 +126,14 @@ def determinante_cofactores(A):
     return det, pasos, pasos_ecuaciones, None
 
 
-def _cofactores_recursivo(M, pasos, pasos_ecuaciones, nivel):
+def _cofactores_recursivo(M, pasos, pasos_ecuaciones, nivel, presupuesto=None):
     """
     Calcula det(M) recursivamente. Retorna (determinante, pasos_count).
     Selecciona la fila o columna con más ceros para minimizar recursiones.
     Emite pasos visuales detallados con coordenadas de tachado y submatrices.
     """
+    presupuesto = presupuesto or Presupuesto()
+    presupuesto.revisar()
     n = len(M)
     indent = "  " * nivel
 
@@ -213,7 +215,7 @@ def _cofactores_recursivo(M, pasos, pasos_ecuaciones, nivel):
                 f"a[{fila+1},{j+1}]={_fmt(M[fila][j])} × det(Menor {len(menor_mat)}×{len(menor_mat)})"
             )
 
-            det_menor, _ = _cofactores_recursivo(menor_mat, pasos, pasos_ecuaciones, nivel + 1)
+            det_menor, _ = _cofactores_recursivo(menor_mat, pasos, pasos_ecuaciones, nivel + 1, presupuesto)
             contribucion = signo * M[fila][j] * det_menor
             det += contribucion
 
@@ -280,7 +282,7 @@ def _cofactores_recursivo(M, pasos, pasos_ecuaciones, nivel):
                 f"a[{i+1},{col+1}]={_fmt(M[i][col])} × det(Menor {len(menor_mat)}×{len(menor_mat)})"
             )
 
-            det_menor, _ = _cofactores_recursivo(menor_mat, pasos, pasos_ecuaciones, nivel + 1)
+            det_menor, _ = _cofactores_recursivo(menor_mat, pasos, pasos_ecuaciones, nivel + 1, presupuesto)
             contribucion = signo * M[i][col] * det_menor
             det += contribucion
 
@@ -457,12 +459,9 @@ def determinante_lu(A):
     - tipo: 'lu_final' con L, U, P completas
     """
     n = len(A)
-    if not modo_educativo(n):
-        from .lu_rapido import determinante_resumido
-        return determinante_resumido(A)
     presupuesto = Presupuesto()
 
-    pasos = [{"mensaje": f"Matriz A original ({n}×{n}):", "matriz": [fila[:] for fila in A], "tipo": "matriz_original"}]
+    pasos = Registro([{ "mensaje": f"Matriz A original ({n}×{n}):", "matriz": [fila[:] for fila in A], "tipo": "matriz_original"}], limite=1000)
     pasos_ecuaciones = [
         f"Método: Factorización LU con pivoteo parcial — Matriz {n}×{n}",
         "Se descompone PA = LU, donde P es la matriz de permutación, L es triangular inferior y U es triangular superior.",
