@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         matriz_2d.forEach(row => {
             html += '<div class="matrix__row">';
             row.forEach(val => {
-                const fmt = Number.isInteger(val) ? val : val.toFixed(3);
+                const fmt = `<span data-tanix-numero="${val}">${Tanix.fmt(val)}</span>`;
                 html += `<div class="matrix__cell">${fmt}</div>`;
             });
             html += '</div>';
@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Backend communication
     async function fetchOperacion(url, data, alertId, resultId) {
         try {
-            const res = await fetch(url, {
+            const res = await Tanix.solicitar(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const resultsDiv = document.getElementById(resultId);
             resultsDiv.innerHTML = '';
             resultsDiv.classList.remove('hidden');
+            Tanix.mostrarResumen(resultsDiv,json);
 
             if (json.mensaje) {
                 const msgDiv = document.createElement('div');
@@ -122,6 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (error) {
+            if (error.name === 'AbortError') return;
             showMsg(alertId, 'Fallo de Red: No se estableció conexión con el servidor Flask.', 'error');
         }
     }

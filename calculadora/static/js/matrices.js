@@ -56,17 +56,17 @@ document.addEventListener('DOMContentLoaded', () => {
      * Retorna una Promise que resuelve a true (proceder) o false (cancelar).
      */
     function mostrarDialogoRendimiento(filas, columnas, operacion) {
+        if (filas > 50 || columnas > 50) { showMsg('mat-alert', 'La dimensión máxima es 50×50.'); return Promise.resolve(false); }
+        if (Tanix.repitiendo) return Promise.resolve(true);
         return new Promise((resolve) => {
             const alertBox = document.getElementById('mat-alert');
             const ramCliente = obtenerRAMCliente();
             const celdas = filas * columnas;
 
             // Límite de protección justificado:
-            // Para inversa/multiplicación con complejidad O(n³), una 200×200
-            // genera ~8 millones de operaciones. Más allá, el tiempo del servidor
-            // puede superar los 30 s y la aumentada consume memoria significativa.
-            // El servidor también valida este límite independientemente.
-            const LIMITE_CELDAS = 40000; // ~200×200
+            // El servidor admite hasta 50 filas y columnas y limita el tiempo.
+            // A partir de 7 utiliza un procedimiento resumido sin snapshots.
+            const LIMITE_CELDAS = 2500; // ~50×50
 
             const nombreOp = {
                 'suma': 'Suma', 'resta': 'Resta', 'multiplicacion': 'Multiplicación',
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="width:100%;">
                         <p style="margin-bottom:8px;">
                             <strong>⚠️ Operación grande:</strong> ${celdas} celdas para "${nombreOp}".
-                            Límite recomendado: ${LIMITE_CELDAS} celdas (dimensión máxima del servidor: 200×200).
+                            Límite recomendado: ${LIMITE_CELDAS} celdas (dimensión máxima del servidor: 50×50).
                         </p>
                         <p style="margin-bottom:8px; font-size:0.85rem; color:var(--text-muted);">
                             RAM del visitante: ${infoRAM}
@@ -163,10 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * flotantes con hasta 4 decimales significativos.
      */
     function fmtNum(val) {
-        if (typeof val !== 'number') return String(val);
-        if (Number.isInteger(val)) return String(val);
-        // Eliminar ceros finales innecesarios
-        return parseFloat(val.toFixed(4)).toString();
+        return typeof val === 'number' ? `<span data-tanix-numero="${val}">${Tanix.fmt(val)}</span>` : Tanix.fmt(val);
     }
 
     /**
@@ -372,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tInicioReq = performance.now();
 
         try {
-            const res = await fetch(url, {
+            const res = await Tanix.solicitar(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
@@ -424,6 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const resultsDiv = document.getElementById(resultId);
             resultsDiv.innerHTML = '';
             resultsDiv.classList.remove('hidden');
+            Tanix.mostrarResumen(resultsDiv,json);
 
             if (json.mensaje) {
                 const msgDiv = document.createElement('div');
@@ -513,6 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (error) {
+            if (error.name === 'AbortError') return;
             showMsg(alertId, 'Fallo de Red: No se estableció conexión con el servidor Flask.', 'error');
         }
     }
@@ -635,15 +634,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Actualiza la disponibilidad de los métodos según la dimensión de la matriz.
-     * Sarrus solo para 3×3; cofactores limitado a 10×10.
+     * Sarrus solo para 3×3; cofactores limitado a 6×6.
      */
     function actualizarMetodosDisponibles(n) {
         const radCof = document.getElementById('det-met-cofactores');
         const radSar = document.getElementById('det-met-sarrus');
         const radLU  = document.getElementById('det-met-lu');
 
-        // Cofactores: habilitado si n <= 10
-        radCof.disabled = n > 10;
+        // Cofactores: habilitado si n <= 6
+        radCof.disabled = n > 6;
         // Sarrus: solo 3×3
         radSar.disabled = n !== 3;
         // LU: siempre disponible
@@ -775,7 +774,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cell = document.createElement('div');
                 cell.className = 'sarrus-grid__cell';
                 if (i >= 3) cell.classList.add('sarrus-grid__cell--ghost');
-                cell.textContent = fmtNum(filas5[i][j]);
+                cell.textContent = Tanix.fmt(filas5[i][j]);
+                cell.dataset.tanixNumero = filas5[i][j];
                 cell.dataset.row = i;
                 cell.dataset.col = j;
                 grid.appendChild(cell);
@@ -971,7 +971,8 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let j = 0; j < n; j++) {
                 const cell = document.createElement('div');
                 cell.className = 'cofactor-grid__cell';
-                cell.textContent = fmtNum(matriz[i][j]);
+                cell.textContent = Tanix.fmt(matriz[i][j]);
+                cell.dataset.tanixNumero = matriz[i][j];
 
                 if (i === pivote.fila && j === pivote.col) {
                     cell.classList.add('cofactor-grid__cell--pivote');
@@ -1014,7 +1015,8 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let j = 0; j < submatriz[i].length; j++) {
                 const cell = document.createElement('div');
                 cell.className = 'cofactor-grid__cell';
-                cell.textContent = fmtNum(submatriz[i][j]);
+                cell.textContent = Tanix.fmt(submatriz[i][j]);
+                cell.dataset.tanixNumero = submatriz[i][j];
                 subGrid.appendChild(cell);
             }
         }
@@ -1063,7 +1065,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cell = document.createElement('div');
                 cell.className = 'lu-grid__cell';
                 const val = matData[i][j];
-                cell.textContent = fmtNum(val);
+                cell.textContent = Tanix.fmt(val);
+                cell.dataset.tanixNumero = val;
 
                 // Destacar celdas recién calculadas
                 if (celdasSet.has(`${i},${j}`)) {
@@ -1218,7 +1221,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         for (let j = 0; j < n; j++) {
                             const cell = document.createElement('div');
                             cell.className = 'cofactor-grid__cell';
-                            cell.textContent = fmtNum(paso.matriz[i][j]);
+                            cell.textContent = Tanix.fmt(paso.matriz[i][j]);
+                cell.dataset.tanixNumero = paso.matriz[i][j];
 
                             if (paso.expansion_tipo === 'fila' && i === paso.expansion_indice) {
                                 cell.style.background = 'rgba(99, 102, 241, 0.12)';
@@ -1280,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ operacion: 'determinante', A, metodo: 'auto', solo_recomendacion: true })
-        }).catch(() => {});
+        }).then(r=>r.json()).then(data=>{if(data.recomendacion && document.getElementById('mat-a').value.trim()===A.map(f=>f.join(' ')).join('\n'))mostrarRecomendacion(data.recomendacion);}).catch(() => {});
 
         // Recomendación local rápida (sin esperar al servidor)
         let recomLocal;
@@ -1320,7 +1324,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const tInicioReq = performance.now();
 
         try {
-            const res = await fetch('/api/matrices', {
+            const res = await Tanix.solicitar('/api/matrices', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ operacion: 'determinante', A, metodo })
@@ -1367,6 +1371,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsDiv.innerHTML = '';
             resultsDiv.classList.remove('hidden');
 
+            Tanix.mostrarResumen(resultsDiv,json);
             // Resultado escalar destacado
             const detValor = json.resultado;
             const resultadoDiv = document.createElement('div');
@@ -1398,6 +1403,7 @@ document.addEventListener('DOMContentLoaded', () => {
             resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
         } catch (error) {
+            if (error.name === 'AbortError') return;
             showMsg('mat-alert', 'Fallo de Red: No se estableció conexión con el servidor Flask.', 'error');
         }
     });

@@ -62,6 +62,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let debounceTimer = null;
     let fetchAbort = null;        // AbortController para fetch de gráfica
 
+    let validacionAbort = null, limitesAbort = null, calculoAbort = null, compararAbort = null;
+    let graficaPeticion = 0, validacionPeticion = 0, limitesPeticion = 0;
+    let ultimoResultado = null, ultimaComparacion = null;
+    const compararBtn = document.getElementById('tanix-comparar');
+    const comparacionResultados = document.getElementById('tanix-comparacion-resultados');
+
     // Vista de la gráfica (coordenadas matemáticas)
     let viewXMin = -10, viewXMax = 10;
     let viewYMin = -10, viewYMax = 10;
@@ -80,6 +86,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     function invalidarResultado() {
         revision += 1;
+        Tanix.invalidar();
+        [validacionAbort, limitesAbort, calculoAbort, compararAbort].forEach(c => c?.abort());
+        ultimoResultado = null; ultimaComparacion = null;
+        comparacionResultados.replaceChildren();
         rootResult = null;
         alertBox.classList.add('hidden');
         warningBox.classList.add('hidden');
@@ -529,8 +539,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAbort = new AbortController();
 
         const currentRev = revision;
+        const peticionGrafica = ++graficaPeticion;
 
+        const currentRevision = revision;
+        const peticionIntervalo = ++validacionPeticion;
+        validacionAbort?.abort(); validacionAbort = new AbortController();
         fetch('/api/raices/evaluar', {
+            signal: validacionAbort.signal,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -543,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
             .then(r => r.json())
             .then(data => {
-                if (currentRev !== revision) return;
+                if (currentRev !== revision || peticionGrafica !== graficaPeticion) return;
                 if (data.error) {
                     graphStatus.textContent = 'Error';
                     graphData = null;
@@ -556,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(err => {
                 if (err.name === 'AbortError') return;
-                if (currentRev !== revision) return;
+                if (currentRev !== revision || peticionGrafica !== graficaPeticion) return;
                 graphStatus.textContent = 'Sin conexión';
                 graphData = null;
                 dibujarGrafica();
@@ -895,31 +910,39 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const currentRevision = revision;
+        const peticionIntervalo = ++validacionPeticion;
+        validacionAbort?.abort(); validacionAbort = new AbortController();
         fetch('/api/raices/evaluar', {
+            signal: validacionAbort.signal,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ funcion, x_min: xl, x_max: xu, n_puntos: 2 }),
+            body: JSON.stringify({ funcion, x_min: xl, x_max: xu, n_puntos: 65 }),
         })
             .then(r => r.json())
             .then(data => {
+                if (currentRevision !== revision || peticionIntervalo !== validacionPeticion) return;
                 if (data.error || !data.puntos || data.puntos.length < 2) {
                     intervaloStatus.innerHTML = '<div class="intervalo-err">No se pudo verificar</div>';
                     return;
                 }
                 const fxl = data.puntos[0].y;
                 const fxu = data.puntos[data.puntos.length - 1].y;
-                if (fxl === null || fxu === null) {
-                    intervaloStatus.innerHTML = '<div class="intervalo-err">Función no definida en los extremos</div>';
+                if (data.puntos.some(p => p.y === null)) {
+                    intervaloStatus.innerHTML = '<div class="intervalo-err">El muestreo detectó un punto fuera del dominio o discontinuidad</div>';
                     return;
                 }
-                if (fxl * fxu < 0) {
+                if (fxl === 0 || fxu === 0) {
+                    intervaloStatus.textContent = 'Intervalo válido: contiene un extremo con f(x)=0. Calcula para obtener la raíz.';
+                } else if ((fxl > 0) !== (fxu > 0)) {
                     intervaloStatus.innerHTML = `<div class="intervalo-ok">✓ Cambio de signo confirmado: f(${xl})≈${fxl.toFixed(4)}, f(${xu})≈${fxu.toFixed(4)}</div>`;
                 } else {
                     intervaloStatus.innerHTML = `<div class="intervalo-err">✗ Sin cambio de signo: f(${xl})≈${fxl.toFixed(4)}, f(${xu})≈${fxu.toFixed(4)}</div>`;
                 }
                 intervaloStatus.classList.remove('hidden');
             })
-            .catch(() => {
+            .catch(err => {
+                if (err.name === 'AbortError' || currentRevision !== revision || peticionIntervalo !== validacionPeticion) return;
                 intervaloStatus.innerHTML = '<div class="intervalo-err">Error de conexión</div>';
             });
     }
@@ -944,7 +967,11 @@ document.addEventListener('DOMContentLoaded', () => {
         buscarLimitesBtn.disabled = true;
         buscarLimitesBtn.innerHTML = '<span class="spinner"></span> Buscando…';
 
+        const currentRevision = revision;
+        const peticionLimites = ++limitesPeticion;
+        limitesAbort?.abort(); limitesAbort = new AbortController();
         fetch('/api/raices/buscar-limites', {
+            signal: limitesAbort.signal,
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -955,6 +982,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
             .then(r => r.json())
             .then(data => {
+                if (currentRevision !== revision || peticionLimites !== limitesPeticion) return;
                 buscarLimitesBtn.disabled = false;
                 buscarLimitesBtn.innerHTML = `
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1032,7 +1060,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                 </svg>
                 Buscar Límites Automáticamente`;
-                mostrarError('Error de conexión al buscar límites.');
+                if (err.name !== 'AbortError' && currentRevision === revision) mostrarError('Error de conexión al buscar límites.');
             });
     });
 
@@ -1049,16 +1077,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return null;
         }
 
-        if (isNaN(errorEa) || errorEa <= 0) {
+        if (!Number.isFinite(errorEa) || errorEa <= 0 || errorEa > 100) {
             mostrarError('El error esperado (Ea) debe ser un número positivo.');
             return null;
         }
 
+        const iteraciones = Number(maxIterInput.value);
+        if (!Number.isInteger(iteraciones) || iteraciones < 1 || iteraciones > 1000) { mostrarError('Usa entre 1 y 1000 iteraciones.'); return null; }
+        if (funcion.length > 1000) { mostrarError('La función admite hasta 1000 caracteres.'); return null; }
         const datos = {
             funcion: funcion,
             metodo: metodo,
             error_esperado: errorEa,
-            max_iter: parseInt(maxIterInput.value) || 100,
+            max_iter: iteraciones,
         };
 
         if (metodo === 'biseccion' || metodo === 'regla_falsa') {
@@ -1123,7 +1154,7 @@ document.addEventListener('DOMContentLoaded', () => {
         html += `
             <div class="alert ${claseAlerta}" style="margin-bottom: 1.5rem;">
                 ${iconoEstado}
-                <span>${data.mensaje || (esExito ? 'Raíz encontrada con éxito.' : 'No se alcanzó convergencia.')}</span>
+                <span>${escapeHtml(data.mensaje || (esExito ? 'Raíz encontrada con éxito.' : 'No se alcanzó convergencia.'))}</span>
             </div>
         `;
 
@@ -1135,7 +1166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         Raíz aproximada:
                     </span>
                     <span style="font-size: 1.8rem; letter-spacing: 0.02em; font-family: 'Fira Code', monospace;">
-                        x ≈ ${data.resultado}
+                        x ≈ ${Tanix.fmt(data.resultado)}
                     </span>
                     <span style="font-size: 0.85rem; color: var(--text-muted); display: block; margin-top: 8px;">
                         Iteraciones: ${data.iteraciones} &nbsp;|&nbsp; Convergencia: ${esExito ? 'Sí ✓' : 'No ✗'}
@@ -1144,6 +1175,9 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
         }
 
+        html += `<p>Residuo |f(x)|: ${Tanix.fmt(data.residuo)} · Error absoluto: ${Tanix.fmt(data.error_absoluto)} · Ea relativo: ${Tanix.fmt(data.error_final)}% · Tiempo: ${Tanix.fmt(data.tiempo_s)} s</p>`;
+        html += `<p>Tolerancia Ea: ${Tanix.fmt(data.tolerancia_porcentual)}%. ${escapeHtml(data.criterio_residuo || '')}</p>`;
+        if (data.advertencias?.length) html += `<p>${data.advertencias.map(escapeHtml).join(' ')}</p>`;
         // Tabla de iteraciones
         if (data.pasos && data.pasos.length > 0) {
             html += `
@@ -1200,13 +1234,13 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `
                 <tr class="${esUltimo ? 'raices-table__row--final' : ''}">
                     <td>${p.iteracion}</td>
-                    <td>${p.xl}</td>
-                    <td>${p.xu}</td>
-                    <td><strong>${p.xr}</strong></td>
-                    <td>${p.f_xl}</td>
-                    <td>${p.f_xu}</td>
-                    <td>${p.f_xr}</td>
-                    <td>${p.ea}%</td>
+                    <td>${Tanix.fmt(p.xl)}</td>
+                    <td>${Tanix.fmt(p.xu)}</td>
+                    <td><strong>${Tanix.fmt(p.xr)}</strong></td>
+                    <td>${Tanix.fmt(p.f_xl)}</td>
+                    <td>${Tanix.fmt(p.f_xu)}</td>
+                    <td>${Tanix.fmt(p.f_xr)}</td>
+                    <td>${Tanix.fmt(p.ea)}%</td>
                 </tr>
             `;
         });
@@ -1236,11 +1270,11 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `
                 <tr class="${esUltimo ? 'raices-table__row--final' : ''}">
                     <td>${p.iteracion}</td>
-                    <td>${p.xi}</td>
-                    <td>${p.f_xi}</td>
-                    <td>${p.f_prima_xi}</td>
-                    <td><strong>${p.xi_nuevo}</strong></td>
-                    <td>${p.ea}%</td>
+                    <td>${Tanix.fmt(p.xi)}</td>
+                    <td>${Tanix.fmt(p.f_xi)}</td>
+                    <td>${Tanix.fmt(p.f_prima_xi)}</td>
+                    <td><strong>${Tanix.fmt(p.xi_nuevo)}</strong></td>
+                    <td>${Tanix.fmt(p.ea)}%</td>
                 </tr>
             `;
         });
@@ -1271,12 +1305,12 @@ document.addEventListener('DOMContentLoaded', () => {
             html += `
                 <tr class="${esUltimo ? 'raices-table__row--final' : ''}">
                     <td>${p.iteracion}</td>
-                    <td>${p.x_i_menos1}</td>
-                    <td>${p.x_i}</td>
-                    <td>${p.f_i_menos1}</td>
-                    <td>${p.f_i}</td>
-                    <td><strong>${p.x_nuevo}</strong></td>
-                    <td>${p.ea}%</td>
+                    <td>${Tanix.fmt(p.x_i_menos1)}</td>
+                    <td>${Tanix.fmt(p.x_i)}</td>
+                    <td>${Tanix.fmt(p.f_i_menos1)}</td>
+                    <td>${Tanix.fmt(p.f_i)}</td>
+                    <td><strong>${Tanix.fmt(p.x_nuevo)}</strong></td>
+                    <td>${Tanix.fmt(p.ea)}%</td>
                 </tr>
             `;
         });
@@ -1299,8 +1333,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const originalHTML = submitBtn.innerHTML;
         submitBtn.innerHTML = '<span class="spinner"></span> Calculando…';
 
+        calculoAbort = new AbortController();
         try {
             const response = await fetch('/api/raices', {
+                signal: calculoAbort.signal,
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(datos),
@@ -1319,11 +1355,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 rootResult = data;
             }
 
+            ultimoResultado = {data, metodo: datos.metodo};
+            Tanix.registrar('/api/raices', datos, data);
             renderizarResultado(data, datos.metodo);
             dibujarGrafica();   // Redibuja con marcador de raíz si aplica
 
         } catch (error) {
-            if (currentRevision !== revision) return;
+            if (error.name === 'AbortError' || currentRevision !== revision) return;
             if (error instanceof TypeError) {
                 mostrarError('Error de conexión con el servidor. Verifica que Flask esté ejecutándose.');
             } else {
@@ -1334,6 +1372,51 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.innerHTML = originalHTML;
         }
     }
+
+    function dibujarComparacion(data) {
+        comparacionResultados.replaceChildren();
+        const tabla=document.createElement('table');tabla.className='raices-table';
+        const encabezado=document.createElement('tr');
+        ['Método','Raíz aproximada','Iteraciones','Ea (%)','Residuo','Estado','Tiempo (s)'].forEach(t=>{const th=document.createElement('th');th.scope='col';th.textContent=t;encabezado.append(th);});
+        tabla.append(encabezado);
+        for (const r of data.comparacion) {
+            const tr=document.createElement('tr');
+            [r.metodo,Tanix.fmt(r.resultado),r.iteraciones,Tanix.fmt(r.error_final),Tanix.fmt(r.residuo),r.estado,Tanix.fmt(r.tiempo_s)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td);});
+            tr.title=r.mensaje; tabla.append(tr);
+            if (!r.convergencia) { const aviso=document.createElement('tr');const td=document.createElement('td');td.colSpan=7;td.textContent=r.mensaje;aviso.append(td);tabla.append(aviso); }
+        }
+        comparacionResultados.append(tabla);
+    }
+    compararBtn.addEventListener('click', async()=>{
+        invalidarResultado();
+        const actual=revision;
+        const numeroCampo=id=>{ const input=document.getElementById(id);return input.value.trim()==='' ? null : Number(input.value); };
+        const datos={funcion:funcionInput.value.trim(),error_esperado:Number(errorInput.value),max_iter:Number(maxIterInput.value),
+            xl:numeroCampo('tanix-comparar-xl'),xu:numeroCampo('tanix-comparar-xu'),x0:numeroCampo('tanix-comparar-x0'),x_menos1:numeroCampo('tanix-comparar-xm1')};
+        compararAbort=new AbortController();compararBtn.disabled=true;
+        try {
+            const response=await fetch('/api/raices/comparar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(datos),signal:compararAbort.signal});
+            const data=await response.json();if(actual!==revision)return;
+            if(!response.ok)throw new Error(data.error || 'No se pudo comparar.');
+            ultimaComparacion=data;dibujarComparacion(data);Tanix.registrar('/api/raices/comparar',datos,data);
+        } catch(error) {if(error.name!=='AbortError' && actual===revision)mostrarError(error.message);}
+        finally {compararBtn.disabled=false;}
+    });
+    document.addEventListener('tanix:precision',()=>{
+        if(ultimoResultado)renderizarResultado(ultimoResultado.data,ultimoResultado.metodo);
+        if(ultimaComparacion)dibujarComparacion(ultimaComparacion);
+        dibujarGrafica();
+    });
+    document.querySelectorAll('#tanix-comparacion-panel input').forEach(input=>input.addEventListener('input',invalidarResultado));
+    canvas.tabIndex=0;canvas.setAttribute('aria-label','Gráfica exploratoria: + y - para zoom, flechas para desplazar.');
+    canvas.addEventListener('keydown',e=>{
+        if(e.key==='+' || e.key==='='){e.preventDefault();zoomInBtn.click();}
+        else if(e.key==='-'){e.preventDefault();zoomOutBtn.click();}
+        else if(['ArrowLeft','ArrowRight'].includes(e.key)){
+            e.preventDefault();const delta=(viewXMax-viewXMin)*.1*(e.key==='ArrowRight'?1:-1);viewXMin+=delta;viewXMax+=delta;debounceSolicitarDatos();dibujarGrafica();
+        }
+    });
+    document.addEventListener('keydown',e=>{if(e.key==='Enter' && e.target.matches('#raices-funcion-raw,#raices-params-cerrados input,#raices-params-newton input,#raices-params-secante input')){e.preventDefault();if(!submitBtn.disabled)calcularRaiz();}});
 
     // =========================================
     // EVENT LISTENERS

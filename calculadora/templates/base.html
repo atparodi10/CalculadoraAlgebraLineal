@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
     {% block extra_css %}{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/herramientas.css') }}">
 </head>
 <body>
     <!-- NAVBAR -->
@@ -81,6 +82,29 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-content">
+        {% if active_page != 'home' %}
+        <details class="card tanix-herramientas">
+            <summary>Historial, precisión y exportación</summary>
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label" for="tanix-precision">Decimales de presentación</label>
+                    <select class="form-select" id="tanix-precision"><option>4</option><option selected>6</option><option>8</option><option>10</option></select>
+                    <small>Los cálculos conservan su precisión interna.</small>
+                </div>
+                {% if active_page in ['matrices','ecuaciones','vectores'] %}
+                <div class="form-group"><label class="form-label" for="tanix-modo">Procedimiento</label>
+                    <select class="form-select" id="tanix-modo"><option value="auto">Automático</option><option value="educativo">Educativo (hasta 6)</option><option value="rapido">Rápido (hasta 50)</option></select>
+                </div>{% endif %}
+            </div>
+            <div class="btn-group">
+                <button type="button" class="btn btn--primary" id="tanix-csv" data-tanix-exportar disabled>Exportar CSV</button>
+                <button type="button" class="btn btn--primary" id="tanix-imprimir" data-tanix-exportar disabled>Imprimir / PDF</button>
+                <button type="button" class="btn btn--primary" id="tanix-copiar" data-tanix-exportar disabled>Copiar procedimiento</button>
+                <button type="button" class="btn btn--primary" id="tanix-limpiar">Limpiar historial</button>
+            </div>
+            <p id="tanix-aviso" role="status" aria-live="polite"></p>
+            <ul id="tanix-historial-lista"></ul>
+        </details>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 
@@ -92,7 +116,9 @@
         </div>
     </footer>
 
+    <section id="tanix-informe" aria-label="Informe para impresión"></section>
     <!-- SCRIPTS -->
+    <script src="{{ url_for('static', filename='js/herramientas.js') }}"></script>
     <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
     <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
     {% block extra_js %}{% endblock %}

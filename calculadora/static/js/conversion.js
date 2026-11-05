@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
         submit.innerHTML = '<span class="spinner"></span> Convirtiendo…';
 
         try {
-            const response = await fetch('/convertir', {
+            const response = await Tanix.solicitar('/convertir', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -103,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
             mostrarResultado(data);
 
         } catch (error) {
+            if (error.name === 'AbortError') return;
             if (currentRevision !== revision) return;
             if (error instanceof TypeError) {
                 mostrarError('Error de conexión con el servidor. Verifica que Flask esté ejecutándose.');
