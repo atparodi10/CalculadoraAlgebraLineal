@@ -19,7 +19,8 @@ jobs:
       - name: Comprobar JavaScript
         run: find calculadora/static/js -name '*.js' -exec node --check {} \;
   navegador:
-    runs-on: ubuntu-latest
+    # Playwright 1.56.1 dispone de Chromium y dependencias para Ubuntu 24.04.
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
