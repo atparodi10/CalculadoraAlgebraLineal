@@ -1,23 +1,14 @@
 from calculadora.metodos.gauss_jordan import resolver_gauss_jordan
 from calculadora.utilidades.matrices import clonar_matriz
 
-def validar_formato_vector(vector, n, nombre_vector="Vector"):
-    """
-    Función escudo que verifica la integridad estructural y la dimensión geométrica del vector.
-    Paso 1: Confirma que la longitud del vector coincida exactamente con la dimensión 'n' exigida por el usuario.
-    Paso 2: Itera sobre cada componente para asegurar que contenga estrictamente valores numéricos, bloqueando letras o nulos.
-    """
-    if not vector or not isinstance(vector, list):
-        return False, f"Error: {nombre_vector} no tiene un formato de lista válido."
-    
-    if len(vector) != n:
-        return False, f"Error dimensional: {nombre_vector} debe tener exactamente {n} componentes (R^{n})."
-    
-    for indice, elemento in enumerate(vector):
-        if not isinstance(elemento, (int, float)):
-            return False, f"Error en {nombre_vector}: La componente {indice + 1} no es numérica ('{elemento}')."
-            
-    return True, "OK"
+from ..utilidades.validacion import vector, numero
+
+def validar_formato_vector(valor, n, nombre_vector="Vector"):
+    try:
+        vector(valor, n, nombre_vector)
+        return True, 'OK'
+    except ValueError as error:
+        return False, str(error)
 
 
 def suma_vectores(u, v, n):
@@ -72,9 +63,10 @@ def mult_escalar_vector(c, v, n):
     Itera a través de todas las componentes multiplicando el escalar por el valor de cada coordenada.
     Devuelve el vector transformado y documenta la ecuación lineal ejecutada en cada posición.
     """
-    if not isinstance(c, (int, float)):
+    if type(c) not in (int, float):
         return None, [], "Error: El escalar debe ser numérico."
         
+    numero(c, "c")
     valida_v, msj_v = validar_formato_vector(v, n, "Vector v")
     if not valida_v: return None, [], msj_v
 
@@ -95,6 +87,8 @@ def verificar_combinacion_lineal(vectores_v, vector_b):
     Paso 1: Valida que todos los vectores pertenezcan al mismo espacio R^m dictado por el vector resultado 'b'.
     Paso 2: Envía la matriz al motor de Gauss-Jordan y traduce su veredicto (Consistente/Inconsistente) a un análisis lógico.
     """
+    if not isinstance(vector_b, list) or not isinstance(vectores_v, list) or not vectores_v:
+        return None, 'Incluye un vector objetivo y al menos un vector generador.', [], [], []
     m = len(vector_b)
     n = len(vectores_v)
     

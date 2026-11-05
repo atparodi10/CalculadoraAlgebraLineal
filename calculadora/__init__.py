@@ -9,7 +9,7 @@ from .rutas import (
 )
 from .rutas_conversion import convertir
 from .rutas_romanos import page_romanos, api_romanos
-from .rutas_raices import page_raices, api_raices, api_evaluar_rango, api_buscar_limites
+from .rutas_raices import page_raices, api_raices, api_evaluar_rango, api_buscar_limites, api_comparar
 
 # Flask(__name__) toma este paquete como referencia para localizar templates/ y
 # static/. Por eso ambas carpetas están dentro de calculadora.
@@ -37,3 +37,33 @@ app.add_url_rule('/api/romanos', view_func=api_romanos, methods=['POST'])
 app.add_url_rule('/api/raices', view_func=api_raices, methods=['POST'])
 app.add_url_rule('/api/raices/evaluar', view_func=api_evaluar_rango, methods=['POST'])
 app.add_url_rule('/api/raices/buscar-limites', view_func=api_buscar_limites, methods=['POST'])
+app.add_url_rule('/api/raices/comparar', view_func=api_comparar, methods=['POST'])
+
+# Límite de cuerpo antes de leer JSON y errores controlados en todas las APIs.
+from flask import jsonify, request, g
+import time
+from werkzeug.exceptions import HTTPException
+from .utilidades.validacion import validar_peticion
+app.config['MAX_CONTENT_LENGTH'] = 512 * 1024
+@app.before_request
+def iniciar_peticion():
+    g.inicio = time.perf_counter()
+    validar_peticion()
+
+@app.errorhandler(ValueError)
+def error_entrada(error):
+    return jsonify({'error': str(error)}), 400
+
+@app.errorhandler(HTTPException)
+def error_http(error):
+    if request.method == 'POST' or request.path.startswith('/api/'):
+        return jsonify({'error': 'La petición excede el límite permitido.' if error.code == 413 else 'Petición HTTP inválida.'}), error.code
+    return error
+
+@app.errorhandler(Exception)
+def error_interno(error):
+    app.logger.exception('Fallo inesperado al procesar la petición')
+    return jsonify({'error': 'No se pudo completar la operación. Revisa los datos o inténtalo nuevamente.'}), 500
+
+from .utilidades.respuestas import preparar_respuesta
+app.after_request(preparar_respuesta)

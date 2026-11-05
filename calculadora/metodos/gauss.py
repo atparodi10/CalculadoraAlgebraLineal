@@ -1,22 +1,13 @@
-# MOTOR DE SISTEMAS: GAUSS
-# Eliminación hacia abajo y sustitución hacia atrás.
-# Contrato compartido por resolver_gauss, resolver_gauss_jordan y resolver_pivote:
-# A: lista de m filas y n coeficientes; b: lista de m términos independientes.
-# m y n: dimensiones ya interpretadas por el controlador. Se supone que son
-# coherentes con las listas; este motor no valida por sí mismo el formato.
-# Retorna (M, pasos, tipo_sistema, soluciones, pasos_ecuaciones).
-# M es la matriz aumentada transformada. pasos guarda matrices y mensajes;
-# pasos_ecuaciones guarda texto algebraico. soluciones sigue el orden x1..xn
-# y queda vacía cuando no existe una solución única.
-#
-# Las operaciones elementales conservan el conjunto de soluciones: intercambiar
-# filas, dividir una fila por un número no nulo y restar un múltiplo de otra fila.
-# A y b se conservan: se trabaja sobre filas copiadas en M. Se usa float, con
-# tolerancia 1e-10 para decidir qué valores se tratan como cero.
+"""Resolución por gauss: conserva el procedimiento y precisión interna."""
 from ..utilidades.matrices import clonar_matriz
 from ..utilidades.ecuaciones import matriz_a_ecuaciones
+from ..utilidades.sistemas import validar_sistema, parametrizar
+from ..utilidades.recursos import modo_educativo, Registro, Presupuesto
 
 def resolver_gauss(A, b, m, n):
+    validar_sistema(A, b, m, n)
+    educativo = modo_educativo(max(m, n))
+    presupuesto = Presupuesto()
     # Construye [A | b]: copia cada fila de A y añade el término independiente.
     # En M[i][j], i identifica la fila y j la columna; M[i][n] es el valor a la derecha
     # del '='. Los índices internos empiezan en 0 y los mensajes al usuario en 1.
@@ -30,15 +21,27 @@ def resolver_gauss(A, b, m, n):
     # externa (cierre o closure). No devuelve datos: añade un diccionario a pasos.
     # clonar_matriz evita que las siguientes operaciones alteren el historial.
     def guardar_paso(mensaje, matriz_actual):
-        pasos.append({"mensaje": mensaje, "matriz": clonar_matriz(matriz_actual)})
+        if educativo:
+            pasos.append({"mensaje": mensaje, "matriz": clonar_matriz(matriz_actual)})
 
     guardar_paso("Matriz aumentada inicial:", M)
+    # Escalar cada fila conserva el sistema y evita declarar cero un pivote
+    # pequeño únicamente por las unidades de los datos.
+    for i in range(m):
+        escala = max(abs(v) for v in M[i][:n])
+        if escala and escala != 1:
+            M[i] = [v/escala for v in M[i]]
+            guardar_paso(f'F{i+1} / {escala:.10g} (escala de fila)', M)
+        elif not escala and M[i][n] != 0:
+            M[i][n] = 1.0
+            guardar_paso(f'F{i+1}: contradicción 0 = 1 al normalizar el término independiente', M)
     fila_actual = 0
     
     # col recorre las columnas de variables; fila_actual señala la próxima fila
     # que recibirá un pivote. Son contadores distintos porque una columna sin pivote
     # se salta sin consumir una fila. Si ya se usaron m filas, termina el recorrido.
     for col in range(n):
+        presupuesto.revisar()
         if fila_actual >= m: break
         
         # Pivoteo parcial: busca el mayor valor absoluto de esta columna entre las filas
@@ -93,6 +96,7 @@ def resolver_gauss(A, b, m, n):
     if filas_no_nulas < n:
         pasos_ecuaciones.append("Sistema Final Simplificado:")
         pasos_ecuaciones.extend(matriz_a_ecuaciones(M, m, n))
+        pasos_ecuaciones.extend(parametrizar(M, m, n))
         return M, pasos, "Sistema Consistente Indeterminado: Presenta Infinitas Soluciones", [], pasos_ecuaciones
 
     tipo_sistema = "Sistema Consistente Determinado: Presenta Solución Única"
@@ -127,8 +131,6 @@ def resolver_gauss(A, b, m, n):
             else:
                 pasos_ecuaciones.append(f"x{i+1} = {round(M[i][n], 4)} / {round(M[i][i], 4)} = {round(soluciones[i], 4)}")
 
-    # El redondeo final facilita la lectura, pero también afecta a las soluciones
-    # que recibirá verificar_solucion. Con infinitas soluciones este método muestra
-    # el sistema simplificado, sin construir una parametrización completa.
-    return M, pasos, tipo_sistema, [round(s, 4) for s in soluciones], pasos_ecuaciones
+    # La solución se devuelve completa. La interfaz controla su presentación.
+    return M, pasos, tipo_sistema, soluciones, pasos_ecuaciones
 

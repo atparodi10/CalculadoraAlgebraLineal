@@ -53,6 +53,8 @@ def convertir_fraccion(resto, denominador, base):
 def convertir_numero(numero, base_origen, base_destino):
     """Convierte entre cualquier base (2, 8, 10, 16) usando Base 10 como pivote matemático."""
     
+    if not isinstance(numero, str):
+        raise ValueError('Ingresá el número como texto.')
     # 1. Validar las bases
     if type(base_origen) is not int or base_origen not in (2, 8, 10, 16):
         raise ValueError('Base de origen inválida. Usa 2, 8, 10 o 16.')

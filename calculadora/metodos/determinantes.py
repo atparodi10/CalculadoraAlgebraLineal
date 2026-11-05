@@ -17,10 +17,11 @@ import time
 import math
 
 from .operaciones_matrices import validar_formato_matriz
+from ..utilidades.recursos import modo_educativo, Registro, Presupuesto
 
 # --- Límites de protección ---
-LIMITE_DIMENSION_MAXIMA = 200
-LIMITE_COFACTORES = 10  # Cofactores recursivo es O(n!); limitar para evitar bloqueos
+LIMITE_DIMENSION_MAXIMA = 50
+LIMITE_COFACTORES = 6  # Cofactores recursivo es O(n!); limitar para evitar bloqueos
 
 
 def _obtener_info_ram_servidor():
@@ -47,10 +48,8 @@ def _obtener_info_ram_servidor():
 
 
 def _redondear(val, decimales=6):
-    """Redondea para presentación. Valores ~0 se convierten a 0.0."""
-    if abs(val) < 1e-10:
-        return 0.0
-    return round(val, decimales)
+    """Compatibilidad: conserva los valores; la interfaz controla los decimales."""
+    return val
 
 
 def _fmt(val):
@@ -201,7 +200,7 @@ def _cofactores_recursivo(M, pasos, pasos_ecuaciones, nivel):
         terminos = []
 
         for j in range(n):
-            if abs(M[fila][j]) < 1e-10:
+            if M[fila][j] == 0:
                 terminos.append(f"0")
                 continue
 
@@ -268,7 +267,7 @@ def _cofactores_recursivo(M, pasos, pasos_ecuaciones, nivel):
         terminos = []
 
         for i in range(n):
-            if abs(M[i][col]) < 1e-10:
+            if M[i][col] == 0:
                 terminos.append(f"0")
                 continue
 
@@ -386,22 +385,22 @@ def determinante_sarrus(A):
 
     # Diagonales principales (↘) en la cuadrícula expandida 5×3
     # D1: (0,0) → (1,1) → (2,2)
-    # D2: (1,0) → (2,1) → (3,2)  — fila 3 es A[0] duplicada
-    # D3: (2,0) → (3,1) → (4,2)  — filas 3,4 son A[0],A[1] duplicadas
+    # D2 (b·f·g): (2,0) → (3,1) → (4,2).
+    # D3 (c·d·h): (1,0) → (2,1) → (3,2).
     diag_principales = [
         {"coords": [[0, 0], [1, 1], [2, 2]], "elementos": [_fmt(a), _fmt(e), _fmt(k)], "producto": _redondear(p1, 4)},
-        {"coords": [[1, 0], [2, 1], [3, 2]], "elementos": [_fmt(d), _fmt(h), _fmt(c)], "producto": _redondear(p2, 4)},
-        {"coords": [[2, 0], [3, 1], [4, 2]], "elementos": [_fmt(g), _fmt(b), _fmt(f)], "producto": _redondear(p3, 4)},
+        {"coords": [[2, 0], [3, 1], [4, 2]], "elementos": [_fmt(g), _fmt(b), _fmt(f)], "producto": _redondear(p2, 4)},
+        {"coords": [[1, 0], [2, 1], [3, 2]], "elementos": [_fmt(d), _fmt(h), _fmt(c)], "producto": _redondear(p3, 4)},
     ]
 
     # Diagonales secundarias (↙) en la cuadrícula expandida 5×3
     # D1: (0,2) → (1,1) → (2,0)
-    # D2: (1,2) → (2,1) → (3,0)
-    # D3: (2,2) → (3,1) → (4,0)
+    # D2 (b·d·k): (2,2) → (3,1) → (4,0).
+    # D3 (a·f·h): (1,2) → (2,1) → (3,0).
     diag_secundarias = [
         {"coords": [[0, 2], [1, 1], [2, 0]], "elementos": [_fmt(c), _fmt(e), _fmt(g)], "producto": _redondear(n1, 4)},
-        {"coords": [[1, 2], [2, 1], [3, 0]], "elementos": [_fmt(f), _fmt(h), _fmt(a)], "producto": _redondear(n2, 4)},
-        {"coords": [[2, 2], [3, 1], [4, 0]], "elementos": [_fmt(k), _fmt(b), _fmt(d)], "producto": _redondear(n3, 4)},
+        {"coords": [[2, 2], [3, 1], [4, 0]], "elementos": [_fmt(k), _fmt(b), _fmt(d)], "producto": _redondear(n2, 4)},
+        {"coords": [[1, 2], [2, 1], [3, 0]], "elementos": [_fmt(f), _fmt(h), _fmt(a)], "producto": _redondear(n3, 4)},
     ]
 
     # Paso visual completo con toda la información de Sarrus
@@ -458,6 +457,10 @@ def determinante_lu(A):
     - tipo: 'lu_final' con L, U, P completas
     """
     n = len(A)
+    if not modo_educativo(n):
+        from .lu_rapido import determinante_resumido
+        return determinante_resumido(A)
+    presupuesto = Presupuesto()
 
     pasos = [{"mensaje": f"Matriz A original ({n}×{n}):", "matriz": [fila[:] for fila in A], "tipo": "matriz_original"}]
     pasos_ecuaciones = [
@@ -485,13 +488,14 @@ def determinante_lu(A):
     })
 
     for col in range(n):
+        presupuesto.revisar()
         # Pivoteo parcial: encontrar el mayor valor absoluto en la columna
         pivote_idx = col
         for i in range(col + 1, n):
             if abs(U[i][col]) > abs(U[pivote_idx][col]):
                 pivote_idx = i
 
-        if abs(U[pivote_idx][col]) < 1e-10:
+        if U[pivote_idx][col] == 0:
             # Pivote cero → determinante es 0
             pasos_ecuaciones.append(
                 f"Columna {col + 1}: pivote ≈ 0 → La matriz es singular, det(A) = 0"
@@ -538,7 +542,7 @@ def determinante_lu(A):
         celdas_U_nuevas = []
 
         for i in range(col + 1, n):
-            if abs(U[i][col]) < 1e-10:
+            if U[i][col] == 0:
                 L[i][col] = 0.0
                 continue
             factor = U[i][col] / U[col][col]
@@ -780,7 +784,7 @@ def calcular_determinante(A, metodo="auto"):
         return None, pasos, pasos_eq, err, tiempo_info, recomendacion
 
     t_fin = time.perf_counter()
-    info_ram = _obtener_info_ram_servidor()
+    info_ram = None
     tiempo_info = {
         "duracion_calculo_s": round(t_fin - t_inicio, 6),
         "descripcion": (

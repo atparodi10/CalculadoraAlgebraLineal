@@ -18,6 +18,7 @@ import math
 
 from .operaciones_matrices import validar_formato_matriz
 from ..utilidades.matrices import clonar_matriz
+from ..utilidades.recursos import modo_educativo, Registro, Presupuesto
 
 
 # --- Límites de protección ---
@@ -26,7 +27,7 @@ from ..utilidades.matrices import clonar_matriz
 # amplificar errores de punto flotante en matrices mucho mayores, y la memoria
 # para la aumentada crece como 2·n². Estos límites se validan también aquí en
 # el servidor para no depender únicamente del frontend.
-LIMITE_DIMENSION_MAXIMA = 200
+LIMITE_DIMENSION_MAXIMA = 50
 
 
 def crear_identidad(n):
@@ -123,6 +124,8 @@ def inversa_matriz(A):
         return None, [], [], msj, None
 
     n = len(A)
+    educativo = modo_educativo(n)
+    presupuesto = Presupuesto()
 
     # Verificar que la matriz sea cuadrada
     if len(A[0]) != n:
@@ -162,7 +165,7 @@ def inversa_matriz(A):
         M.append(fila_aumentada)
 
     pasos = []
-    pasos_ecuaciones = ["Método: Eliminación de Gauss-Jordan sobre la matriz aumentada [A | I]"]
+    pasos_ecuaciones = Registro(["Método: Eliminación de Gauss-Jordan sobre la matriz aumentada [A | I]"], activo=educativo)
 
     def extraer_A_actual(mat):
         """Extrae la parte izquierda (n×n) de la matriz aumentada."""
@@ -178,6 +181,7 @@ def inversa_matriz(A):
         Guarda ambas mitades por separado para que el frontend dibuje la
         aumentada con separación visual entre la parte de A y la de I.
         """
+        if not educativo: return
         snapshot = clonar_aumentada(matriz_actual)
         pasos.append({
             "mensaje": mensaje,
@@ -201,7 +205,14 @@ def inversa_matriz(A):
     # absoluto en la columna actual. Este criterio reduce la amplificación de
     # errores de redondeo al evitar dividir por valores muy pequeños (mejora
     # la estabilidad numérica sin costo computacional adicional significativo).
+    for i in range(n):
+        escala = max(abs(v) for v in A[i])
+        if escala and escala != 1:
+            M[i] = [v/escala for v in M[i]]
+            guardar_paso(f'F{i+1} / {escala:.10g} (escala de fila)', M)
+
     for col in range(n):
+        presupuesto.revisar()
         # --- Pivoteo parcial: buscar el mayor valor absoluto en la columna ---
         pivote = col
         for i in range(col + 1, n):
@@ -211,16 +222,15 @@ def inversa_matriz(A):
         # Si el pivote es (casi) cero, la matriz es singular.
         # Tolerancia 1e-10: valores menores se tratan como cero numérico.
         # Se conservan los pasos alcanzados hasta aquí ante singularidad.
-        if abs(M[pivote][col]) < 1e-10:
+        if abs(M[pivote][col]) <= math.ulp(1.0)*n:
             t_fin = time.perf_counter()
             tiempo_info = {
                 "duracion_calculo_s": round(t_fin - t_inicio, 6),
                 "descripcion": "Tiempo de cálculo del servidor (incluye validación, eliminación y detección de singularidad)"
             }
             return None, pasos, pasos_ecuaciones, (
-                f"Error: La matriz es singular (no invertible). "
-                f"La columna {col+1} se vuelve cero durante la eliminación, "
-                f"indicando que el determinante es 0."
+                f"La matriz es singular o numéricamente indistinguible de una singular. "
+                f"El pivote de la columna {col+1} está por debajo de la precisión de trabajo."
             ), tiempo_info
 
         # Intercambiar filas si es necesario
@@ -238,7 +248,7 @@ def inversa_matriz(A):
 
         # --- Eliminar las demás entradas de la columna (arriba y abajo) ---
         for i in range(n):
-            if i != col and abs(M[i][col]) > 1e-10:
+            if i != col and M[i][col] != 0:
                 factor = M[i][col]
                 for j in range(2 * n):
                     M[i][j] -= factor * M[col][j]
@@ -254,12 +264,7 @@ def inversa_matriz(A):
     inversa_exacta = extraer_I_actual(M)
 
     # Versión redondeada para presentación
-    inversa = []
-    for i in range(n):
-        fila_r = []
-        for j in range(n):
-            fila_r.append(_redondear_presentacion(inversa_exacta[i][j], 6))
-        inversa.append(fila_r)
+    inversa = inversa_exacta
 
     guardar_paso("Matriz aumentada final [I | A⁻¹]:", M)
 
@@ -274,15 +279,17 @@ def inversa_matriz(A):
     TOLERANCIA = 1e-6
     verificacion_ok = True
     producto_resultado = []
-    verificacion_detalle = []  # Desglose celda a celda
+    verificacion_detalle = Registro(activo=educativo)  # Desglose celda a celda
 
     pasos_ecuaciones.append(f"Verificación: A × A⁻¹ ≈ I  (tolerancia: {TOLERANCIA})")
 
+    residuo_maximo = 0.0
     for i in range(n):
+        presupuesto.revisar()
         fila_producto = []
         for j in range(n):
             # Desarrollar la multiplicación fila×columna
-            terminos = []
+            terminos = Registro(activo=educativo)
             suma = 0.0
             for k in range(n):
                 producto_parcial = A[i][k] * inversa_exacta[k][j]
@@ -293,10 +300,12 @@ def inversa_matriz(A):
                     "parcial": _redondear_presentacion(producto_parcial, 6)
                 })
 
-            valor_final = _redondear_presentacion(suma, 6)
+            suma = math.fsum(A[i][k] * inversa_exacta[k][j] for k in range(n))
+            valor_final = suma
             fila_producto.append(valor_final)
 
             esperado = 1.0 if i == j else 0.0
+            residuo_maximo = max(residuo_maximo, abs(suma-esperado))
             if abs(suma - esperado) > TOLERANCIA:
                 verificacion_ok = False
 
@@ -340,7 +349,7 @@ def inversa_matriz(A):
     t_fin = time.perf_counter()
 
     # Recopilar información de RAM del servidor
-    info_ram = _obtener_info_ram_servidor()
+    info_ram = None
 
     tiempo_info = {
         "duracion_calculo_s": round(t_fin - t_inicio, 6),
@@ -353,13 +362,16 @@ def inversa_matriz(A):
 
     # Datos de verificación estructurados para el frontend
     datos_verificacion = {
-        "A_original": [[_redondear_presentacion(A[i][j], 4) for j in range(n)] for i in range(n)],
-        "inversa": [[_redondear_presentacion(inversa[i][j], 4) for j in range(n)] for i in range(n)],
+        "A_original": A,
+        "inversa": inversa,
         "producto": producto_resultado,
         "identidad_esperada": [[1.0 if i == j else 0.0 for j in range(n)] for i in range(n)],
         "detalle_celdas": verificacion_detalle,
         "tolerancia": TOLERANCIA,
-        "verificacion_ok": verificacion_ok
+        "verificacion_ok": verificacion_ok,
+        "residuo_maximo": residuo_maximo,
+        "condicion_estimada": max(sum(abs(v) for v in fila) for fila in A) * max(sum(abs(v) for v in fila) for fila in inversa),
+        "advertencia": "La matriz puede estar mal condicionada; revisa el residuo y la condición estimada." if max(sum(abs(v) for v in fila) for fila in A) * max(sum(abs(v) for v in fila) for fila in inversa) > 1e10 else None
     }
 
     return inversa, pasos, pasos_ecuaciones, None, tiempo_info, datos_verificacion

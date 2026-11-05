@@ -26,7 +26,7 @@ def arabigo_a_romano(numero):
     Algoritmo: resta sucesivamente el mayor valor romano posible del número,
     acumulando los símbolos correspondientes. Genera un desglose paso a paso.
     """
-    if not isinstance(numero, int) or numero < 1 or numero > 3999:
+    if type(numero) is not int or numero < 1 or numero > 3999:
         raise ValueError("El número arábigo debe ser un entero entre 1 y 3999.")
 
     pasos = []
@@ -120,6 +120,7 @@ def convertir_romano(numero, direccion):
     Función puente que invoca la conversión correspondiente según la dirección.
     Es llamada por rutas_romanos.py para despachar la solicitud del frontend.
     """
+    if isinstance(numero, bool): raise ValueError("numero no puede ser un booleano.")
     if direccion == 'romano_a_arabigo':
         if not isinstance(numero, str):
             raise ValueError("Para convertir de Romano a Arábigo, envía una cadena de texto.")

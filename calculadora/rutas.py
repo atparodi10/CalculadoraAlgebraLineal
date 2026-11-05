@@ -6,6 +6,7 @@ los datos hacia las funciones correspondientes y devuelve los resultados formate
 """
 
 from flask import render_template, request, jsonify
+from .utilidades.validacion import MAX_DIMENSION
 
 # Importaciones de utilidades para parseo de texto y comprobación de resultados
 from .utilidades.ecuaciones import parsear_ecuacion
@@ -26,7 +27,7 @@ from .metodos.operaciones_matrices import suma_matrices, resta_matrices, multipl
 from .metodos.inversa import inversa_matriz
 
 # Importación del motor de Determinantes (Cofactores, Sarrus, LU)
-from .metodos.determinantes import calcular_determinante
+from .metodos.determinantes import calcular_determinante, recomendar_metodo
 
 
 # =========================================
@@ -78,12 +79,12 @@ def calcular():
     A, b = [], []
     
     try:
-        for eq in ecuaciones:
+        for numero_eq, eq in enumerate(ecuaciones, 1):
             A_row, b_val = parsear_ecuacion(eq, n)
             A.append(A_row)
             b.append(b_val)
-    except Exception as e:
-        return jsonify({"error": "Formato inválido. Asegúrate de incluir el '=' y nombrar las variables como x1, x2"}), 400
+    except ValueError as e:
+        return jsonify({"error": f"Ecuación {numero_eq}: {e}"}), 400
         
     if metodo == 'gauss_jordan':
         matriz_final, pasos, tipo, soluciones, pasos_ecuaciones = resolver_gauss_jordan(A, b, m, n)
@@ -198,6 +199,10 @@ def api_matrices():
             respuesta["verificacion_visual"] = verificacion_datos
         return jsonify(respuesta)
     elif operacion == 'determinante':
+        if datos.get('solo_recomendacion') is True:
+            A = datos['A']
+            if len(A) != len(A[0]): raise ValueError('El determinante requiere una matriz cuadrada.')
+            return jsonify({'recomendacion': recomendar_metodo(A)})
         metodo_det = datos.get('metodo', 'auto')
         det, pasos, pasos_eq, err, tiempo_info, recomendacion = calcular_determinante(
             datos.get('A', []), metodo_det
