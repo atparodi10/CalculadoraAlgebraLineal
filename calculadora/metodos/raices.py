@@ -211,3 +211,78 @@ def buscar_cambios_signo(expresion, x_min, x_max, n_muestras=500):
         candidatos.append({'xl': xl, 'xu': xu, 'f_xl': a['y'], 'f_xu': b['y']})
         if len(candidatos) >= 40: break
     return candidatos
+
+
+def detectar_raices_visibles(expresion, x_min, x_max, n_muestras=500):
+    """Busca raíces reales aproximadas en la vista; el muestreo no garantiza exhaustividad."""
+    puntos = evaluar_rango(expresion, x_min, x_max, n_muestras)
+    f = compilar_expresion(expresion)
+    encontrados = []
+    paso = (x_max - x_min) / (n_muestras - 1)
+
+    def agregar(x, escala, tangencia=False):
+        valor = f.seguro(x)
+        tolerancia = (1e-12 if tangencia else 1e-8) * min(1., max(escala, 1e-300))
+        if not math.isfinite(valor) or abs(valor) > tolerancia:
+            return
+        if x_min <= x <= x_max and not any(abs(x - otro) <= max(paso * .2, 1e-9) for otro in encontrados):
+            encontrados.append(x)
+
+    for i, punto in enumerate(puntos):
+        y = punto['y']
+        if y is None:
+            continue
+        if y == 0:
+            agregar(punto['x'], 1.)
+        if i == 0:
+            continue
+        anterior = puntos[i-1]
+        if anterior['y'] is None or (anterior['y'] > 0) == (y > 0) or anterior['y'] == 0 or y == 0:
+            continue
+        try:
+            _muestrear_continuidad(f, anterior['x'], punto['x'])
+            izquierda, derecha = anterior['x'], punto['x']
+            signo_izquierdo = anterior['y'] > 0
+            escala = max(abs(anterior['y']), abs(y))
+            for _ in range(100):
+                medio = izquierda + (derecha - izquierda) / 2
+                fm = f.seguro(medio)
+                if not math.isfinite(fm):
+                    break
+                if abs(fm) <= 1e-8 * min(1., escala):
+                    agregar(medio, escala)
+                    break
+                if medio == izquierda or medio == derecha:
+                    break
+                if (fm > 0) == signo_izquierdo:
+                    izquierda = medio
+                else:
+                    derecha = medio
+        except ValueError:
+            continue
+
+    # Un cero de multiplicidad par toca el eje sin cambiar de signo.
+    # Se minimiza |f| solo alrededor de mínimos locales muestreados.
+    for a, b, c in zip(puntos, puntos[1:], puntos[2:]):
+        if any(p['y'] is None for p in (a, b, c)):
+            continue
+        if not (abs(b['y']) < abs(a['y']) and abs(b['y']) < abs(c['y'])):
+            continue
+        if (a['y'] > 0) != (c['y'] > 0):
+            continue  # Los cruces ya se buscaron con Bisección.
+        izquierda, derecha = a['x'], c['x']
+        razon = (math.sqrt(5) - 1) / 2
+        for _ in range(65):
+            u = derecha - razon * (derecha - izquierda)
+            v = izquierda + razon * (derecha - izquierda)
+            fu, fv = f.seguro(u), f.seguro(v)
+            if not math.isfinite(fu) or not math.isfinite(fv):
+                break
+            if abs(fu) <= abs(fv):
+                derecha = v
+            else:
+                izquierda = u
+        else:
+            agregar((izquierda + derecha) / 2, max(abs(a['y']), abs(c['y'])), tangencia=True)
+
+    return sorted(encontrados)[:40]

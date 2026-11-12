@@ -96,6 +96,35 @@
     transition: background var(--transition-smooth), border-color var(--transition-smooth);
 }
 
+.raices-visibles {
+    margin-top: 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.raices-visibles__lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+}
+
+.raices-visibles__opcion {
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    background: var(--bg-card-alt);
+    color: var(--text-primary);
+    padding: 0.55rem 0.8rem;
+    cursor: pointer;
+}
+
+.raices-visibles__opcion:hover,
+.raices-visibles__opcion.is-selected {
+    border-color: var(--color-primary);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+}
+
 .graph-canvas {
     display: block;
     width: 100%;

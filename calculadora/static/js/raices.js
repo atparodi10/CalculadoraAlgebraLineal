@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ctx = canvas.getContext('2d');
     const graphCoords = document.getElementById('graph-coords');
     const graphStatus = document.getElementById('graph-status');
+    const raicesVisiblesContainer = document.getElementById('raices-visibles');
     const zoomInBtn = document.getElementById('graph-zoom-in');
     const zoomOutBtn = document.getElementById('graph-zoom-out');
     const resetBtn = document.getElementById('graph-reset');
@@ -68,6 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let revision = 0;             // Invalidation counter
     let graphData = null;         // {puntos: [{x,y},...]}
     let rootResult = null;        // Resultado del backend (post-cálculo)
+    let raicesVisibles = [];
+    let raizSeleccionada = null;
+    let raicesAbort = null, raicesPeticion = 0;
     let debounceTimer = null;
     let fetchAbort = null;        // AbortController para fetch de gráfica
 
@@ -92,8 +96,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     function invalidarResultado() {
         revision += 1;
-        [validacionAbort, limitesAbort, calculoAbort].forEach(c => c?.abort());
+        [validacionAbort, limitesAbort, calculoAbort, raicesAbort].forEach(c => c?.abort());
+        raicesPeticion += 1;
         rootResult = null;
+        raicesVisibles = [];
+        raizSeleccionada = null;
+        raicesVisiblesContainer.classList.add('hidden');
+        raicesVisiblesContainer.innerHTML = '';
         alertBox.classList.add('hidden');
         warningBox.classList.add('hidden');
         resultsContainer.classList.add('hidden');
@@ -300,9 +309,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Marcadores de intervalo (arrastrables)
         dibujarMarcadores(w, h, colors);
 
-        // Marcador de raíz (SOLO post-cálculo exitoso)
-        if (rootResult && rootResult.convergencia && rootResult.resultado !== null) {
-            dibujarRaiz(w, h, colors, rootResult.resultado);
+        // Solo se destaca la raíz seleccionada, después de calcular.
+        if (rootResult && rootResult.convergencia && raizSeleccionada !== null) {
+            dibujarRaiz(w, h, colors, raizSeleccionada);
         }
     }
 
@@ -502,7 +511,8 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.font = 'bold 11px "Fira Code", monospace';
         ctx.textAlign = 'center';
         ctx.fillStyle = colors.root;
-        ctx.fillText('raíz', p.px, p.py - 14);
+        const indice = raicesVisibles.findIndex(x => x === xRoot);
+        ctx.fillText(indice >= 0 ? `raíz ${etiquetaRaiz(indice)}` : 'raíz', p.px, p.py - 14);
         ctx.fillText(formatNum(xRoot), p.px, p.py - 3 > 12 ? p.py + 22 : p.py + 22);
         ctx.restore();
     }
@@ -573,6 +583,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     autoAjustarY();
                 }
                 dibujarGrafica();
+                if (rootResult && rootResult.convergencia) solicitarRaicesVisibles();
             })
             .catch(err => {
                 if (err.name === 'AbortError') return;
@@ -581,6 +592,70 @@ document.addEventListener('DOMContentLoaded', () => {
                 graphData = null;
                 dibujarGrafica();
             });
+    }
+
+    function etiquetaRaiz(indice) {
+        let etiqueta = '';
+        for (let n = indice + 1; n > 0; n = Math.floor((n - 1) / 26)) {
+            etiqueta = String.fromCharCode(65 + (n - 1) % 26) + etiqueta;
+        }
+        return etiqueta;
+    }
+
+    function mostrarRaicesVisibles() {
+        if (!raicesVisibles.length) {
+            raicesVisiblesContainer.innerHTML = '<p>No se detectaron raíces en el intervalo visible. Amplía o desplaza la gráfica.</p>';
+        } else {
+            raicesVisiblesContainer.innerHTML = '<p>Raíces detectadas en el intervalo visible (selecciona una):</p>' +
+                '<div class="raices-visibles__lista">' + raicesVisibles.map((x, i) =>
+                    `<button type="button" class="raices-visibles__opcion${x === raizSeleccionada ? ' is-selected' : ''}" data-indice="${i}" aria-pressed="${x === raizSeleccionada}">Raíz ${etiquetaRaiz(i)}: ${formatNum(x)}</button>`
+                ).join('') + '</div>';
+        }
+        raicesVisiblesContainer.classList.remove('hidden');
+    }
+
+    raicesVisiblesContainer.addEventListener('click', event => {
+        const opcion = event.target.closest('button[data-indice]');
+        if (!opcion || !raicesVisiblesContainer.contains(opcion)) return;
+        raizSeleccionada = raicesVisibles[Number(opcion.dataset.indice)];
+        mostrarRaicesVisibles();
+        dibujarGrafica();
+    });
+
+    async function solicitarRaicesVisibles() {
+        if (!rootResult || !rootResult.convergencia) return;
+        raicesAbort?.abort();
+        raicesAbort = new AbortController();
+        const peticion = ++raicesPeticion;
+        const actual = revision;
+        const xMin = viewXMin, xMax = viewXMax;
+        try {
+            const response = await fetch('/api/raices/visibles', {
+                method: 'POST', signal: raicesAbort.signal,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ funcion: funcionInput.value.trim(), x_min: xMin, x_max: xMax }),
+            });
+            const datos = await response.json();
+            if (actual !== revision || peticion !== raicesPeticion || xMin !== viewXMin || xMax !== viewXMax) return;
+            if (!response.ok) throw new Error(datos.error || 'No se pudieron buscar raíces.');
+            raicesVisibles = datos.raices.filter(Number.isFinite);
+            const calculada = rootResult.resultado;
+            if (calculada >= xMin && calculada <= xMax &&
+                !raicesVisibles.some(x => Math.abs(x - calculada) <= (xMax - xMin) / 2500)) {
+                raicesVisibles.push(calculada);
+                raicesVisibles.sort((a, b) => a - b);
+            }
+            if (!raicesVisibles.some(x => x === raizSeleccionada)) {
+                raizSeleccionada = raicesVisibles.reduce((mejor, x) =>
+                    mejor === null || Math.abs(x - calculada) < Math.abs(mejor - calculada) ? x : mejor, null);
+            }
+            mostrarRaicesVisibles();
+            dibujarGrafica();
+        } catch (error) {
+            if (error.name === 'AbortError' || actual !== revision || peticion !== raicesPeticion) return;
+            raicesVisiblesContainer.textContent = 'No se pudieron detectar las raíces visibles.';
+            raicesVisiblesContainer.classList.remove('hidden');
+        }
     }
 
     function autoAjustarY() {
@@ -1358,6 +1433,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // REGLA: Solo DESPUÉS de respuesta exitosa se marca la raíz
             if (data.convergencia && data.resultado !== null) {
                 rootResult = data;
+                raizSeleccionada = data.resultado;
+                solicitarRaicesVisibles();
             }
 
             renderizarResultado(data, datos.metodo);

@@ -101,6 +101,16 @@ class Raices(unittest.TestCase):
         self.assertIsNone(evaluar_rango('ln(x)', -1, 1, 11)[0]['y'])
         self.assertEqual(buscar_cambios_signo('1/(x-.3)', -2, 2), [])
         self.assertGreaterEqual(len(buscar_cambios_signo('x^2-4', -5, 5)), 2)
+    def test_raices_visibles_cruces_tangencias_y_asintotas(self):
+        for actual, esperado in [
+            (detectar_raices_visibles('x^3-x', -2, 2), [-1, 0, 1]),
+            (detectar_raices_visibles('(x-2)^2*(x+1)', -3, 3), [-1, 2]),
+        ]:
+            self.assertEqual(len(actual), len(esperado))
+            for valor, raiz in zip(actual, esperado):
+                self.assertAlmostEqual(valor, raiz, places=6)
+        self.assertEqual(detectar_raices_visibles('1/x', -2, 2), [])
+        self.assertEqual(detectar_raices_visibles('(x-2)^2+1e-12', -3, 3), [])
     def test_validaciones_directas(self):
         for args in [('x', 1, 0, .01, 100), ('x', 0, 1, 0, 100), ('x', 0, 1, .01, 0), ('x', 0, math.inf, .01, 100)]:
             with self.subTest(args=args):

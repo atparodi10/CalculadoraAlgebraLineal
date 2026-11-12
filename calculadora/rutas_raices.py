@@ -1,6 +1,6 @@
 """API de raíces: todas las operaciones comparten parser y validaciones."""
 from flask import request, jsonify, render_template
-from .metodos.raices import biseccion, regla_falsa, newton_raphson, secante, evaluar_rango, buscar_cambios_signo
+from .metodos.raices import biseccion, regla_falsa, newton_raphson, secante, evaluar_rango, buscar_cambios_signo, detectar_raices_visibles
 from .utilidades.expresiones import compilar_expresion
 from .utilidades.validacion import numero, entero, texto
 
@@ -51,3 +51,8 @@ def api_evaluar_rango():
 def api_buscar_limites():
     datos = request.get_json(); funcion = _funcion(datos)
     return jsonify({'candidatos': buscar_cambios_signo(funcion, *_rango(datos))})
+
+
+def api_raices_visibles():
+    datos = request.get_json(); funcion = _funcion(datos)
+    return jsonify({'raices': detectar_raices_visibles(funcion, *_rango(datos))})
