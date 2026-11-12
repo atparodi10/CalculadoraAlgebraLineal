@@ -30,10 +30,6 @@ from .metodos.inversa import inversa_matriz
 from .metodos.determinantes import calcular_determinante, recomendar_metodo
 
 
-# =========================================
-# RUTAS DE PÁGINAS (cada módulo tiene su propia página)
-# =========================================
-
 def index():
     """Página principal con tarjetas de módulos."""
     return render_template('index.html', active_page='home')

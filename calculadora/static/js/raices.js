@@ -136,7 +136,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Syntax highlighting (seguro, solo presentación)
         let html = '';
-        const funcNames = ['sin', 'cos', 'tan', 'exp', 'ln', 'log', 'sqrt', 'abs'];
+        const funcNames = ['seno', 'coseno', 'tangente', 'exponencial', 'absoluto',
+                           'sen', 'cos', 'tan', 'exp', 'ln', 'log', 'raiz',
+                           'sin', 'sqrt', 'abs'];
         const funcSet = new Set(funcNames);
         let i = 0;
         while (i < display.length) {

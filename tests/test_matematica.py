@@ -44,6 +44,29 @@ class Expresiones(unittest.TestCase):
                     self.assertAlmostEqual(evaluar_funcion(f'{nombre}(x)', x)/funcion(x), 1., places=12)
     def test_compila_una_vez(self):
         self.assertIs(compilar_expresion('x^2-2'), compilar_expresion('x^2-2'))
+    def test_notacion_espanol(self):
+        """sen y raiz como notación principal en español."""
+        self.assertAlmostEqual(evaluar_funcion('sen(x)', 2), math.sin(2))
+        self.assertAlmostEqual(evaluar_funcion('raiz(x)', 4), 2.0)
+        self.assertAlmostEqual(evaluar_funcion('raiz(x+3)-x', 1), 1.0)
+        self.assertAlmostEqual(evaluar_funcion('sen(x)-x/2', 0), 0.0)
+        # Alias opcionales de nombres completos
+        self.assertAlmostEqual(evaluar_funcion('seno(x)', 2), math.sin(2))
+        self.assertAlmostEqual(evaluar_funcion('coseno(x)', 2), math.cos(2))
+        self.assertAlmostEqual(evaluar_funcion('tangente(x)', 1), math.tan(1))
+        self.assertAlmostEqual(evaluar_funcion('exponencial(x)', 1), math.e)
+        self.assertAlmostEqual(evaluar_funcion('absoluto(x)', -5), 5.0)
+    def test_alias_compatibilidad(self):
+        """sin y sqrt siguen funcionando como alias de compatibilidad."""
+        self.assertAlmostEqual(evaluar_funcion('sin(x)', 2), math.sin(2))
+        self.assertAlmostEqual(evaluar_funcion('sqrt(x)', 4), 2.0)
+        # Multiplicación implícita con notación española
+        self.assertAlmostEqual(evaluar_funcion('3sen(x)', 2), 3*math.sin(2))
+        self.assertAlmostEqual(evaluar_funcion('2raiz(x)', 9), 6.0)
+    def test_sen_seguridad(self):
+        """senx (sin paréntesis) es rechazado como identificador no reconocido."""
+        with self.assertRaises(ValueError): evaluar_funcion('senx', 2)
+        with self.assertRaises(ValueError): evaluar_funcion('raizx', 2)
 
 class Raices(unittest.TestCase):
     def test_cuatro_metodos(self):
@@ -82,6 +105,19 @@ class Raices(unittest.TestCase):
         for args in [('x', 1, 0, .01, 100), ('x', 0, 1, 0, 100), ('x', 0, 1, .01, 0), ('x', 0, math.inf, .01, 100)]:
             with self.subTest(args=args):
                 with self.assertRaises(ValueError): biseccion(*args)
+    def test_notacion_espanol_regla_falsa(self):
+        """Regla falsa con sen(x) y raiz(x) en notación española."""
+        r = regla_falsa('sen(x) - x/2', 1, 3, 0.01)
+        self.assertTrue(r['convergencia'], r)
+        self.assertAlmostEqual(r['resultado'], 1.895494, places=4)
+        r2 = regla_falsa('raiz(x+3) - x', 1, 3, 0.01)
+        self.assertTrue(r2['convergencia'], r2)
+    def test_notacion_espanol_busqueda_limites(self):
+        """Búsqueda automática de límites con notación española."""
+        candidatos = buscar_cambios_signo('sen(x)', -5, 5)
+        self.assertGreaterEqual(len(candidatos), 2)
+        candidatos_raiz = buscar_cambios_signo('raiz(x+3) - x', -2, 5)
+        self.assertGreaterEqual(len(candidatos_raiz), 1)
 
 class Sistemas(unittest.TestCase):
     def test_parser(self):

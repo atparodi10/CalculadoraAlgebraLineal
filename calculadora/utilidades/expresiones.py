@@ -13,7 +13,12 @@ MAX_TOKENS = 256
 MAX_PROFUNDIDAD = 32
 FUNCIONES = {'sin': math.sin, 'cos': math.cos, 'tan': math.tan,
              'sqrt': math.sqrt, 'ln': math.log, 'log': math.log10,
-             'exp': math.exp, 'abs': abs}
+             'exp': math.exp, 'abs': abs,
+             # Notación en español (principales)
+             'sen': math.sin, 'raiz': math.sqrt,
+             # Alias opcionales en español (nombres completos)
+             'seno': math.sin, 'coseno': math.cos, 'tangente': math.tan,
+             'exponencial': math.exp, 'absoluto': abs}
 _NUMERO = re.compile(r'(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)(?:[eE][+-]?[0-9]+)?')
 _PALABRA = re.compile(r'[a-zA-Z_]+')
 
@@ -136,7 +141,7 @@ def _evaluar(nodo, x):
     if tipo == 'neg': return -_evaluar(nodo[1], x)
     if tipo == 'func':
         argumento = _evaluar(nodo[2], x)
-        if nodo[1] == 'tan' and abs(math.cos(argumento)) < 1e-14:
+        if nodo[1] in ('tan', 'tangente') and abs(math.cos(argumento)) < 1e-14:
             raise ValueError('Tangente no definida cerca de una asíntota.')
         valor = FUNCIONES[nodo[1]](argumento)
     else:

@@ -8,10 +8,6 @@ Las entradas de demostración deben ser finitas y moderadas (|x| <= 20).
 """
 
 
-# =========================================
-# FUNCIONES MATEMÁTICAS PURAS (sin librerías)
-# =========================================
-
 def _abs(x):
     """Valor absoluto manual."""
     return x if x >= 0 else -x
