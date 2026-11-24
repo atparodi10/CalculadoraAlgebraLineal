@@ -22,16 +22,27 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => uiAlert.classList.add('hidden'), 7000);
     }
 
-    // Normalize input: replace × (U+00D7) with x (lowercase latin x)
-    // This fixes the bug where mobile keyboards or autocorrect replace x with ×
-    function normalizeEquation(text) {
+    // Same-length character substitutions preserve spaces and selection offsets.
+    function normalizeSymbols(text) {
         return text
             .replace(/×/g, 'x')    // multiplication sign → x
             .replace(/✕/g, 'x')    // heavy multiplication x → x
             .replace(/✖/g, 'x')    // heavy multiplication sign → x
             .replace(/⋅/g, '*')    // dot operator → *
-            .replace(/−/g, '-')    // minus sign → hyphen-minus
-            .trim();
+            .replace(/−/g, '-');   // minus sign → hyphen-minus
+    }
+
+    function normalizeEquation(text) {
+        return normalizeSymbols(text).trim();
+    }
+
+    function actualizarSimbolos(input) {
+        const corrected = normalizeSymbols(input.value);
+        if (corrected === input.value) return;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = corrected;
+        input.setSelectionRange(start, end);
     }
 
     btnGenerate.addEventListener('click', () => {
@@ -147,14 +158,11 @@ document.addEventListener('DOMContentLoaded', () => {
             input.setAttribute('autocorrect', 'off');
             input.setAttribute('autocapitalize', 'off');
             input.setAttribute('spellcheck', 'false');
-            // Real-time normalization: replace × as the user types
-            input.addEventListener('input', function() {
-                const pos = this.selectionStart;
-                const normalized = normalizeEquation(this.value);
-                if (normalized !== this.value) {
-                    this.value = normalized;
-                    this.setSelectionRange(pos, pos);
-                }
+            let composing = false;
+            input.addEventListener('compositionstart', () => { composing = true; });
+            input.addEventListener('compositionend', () => { composing = false; actualizarSimbolos(input); });
+            input.addEventListener('input', event => {
+                if (!composing && !event.isComposing) actualizarSimbolos(input);
             });
             equationList.appendChild(input);
         }
@@ -179,9 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         inputs.forEach(input => {
             const val = normalizeEquation(input.value);
-            // Also update the input visually
-            input.value = val;
-
             if (val === '') {
                 camposVacios = true;
             } else if (!val.includes('=')) {

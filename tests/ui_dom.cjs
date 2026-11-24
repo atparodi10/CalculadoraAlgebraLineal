@@ -115,6 +115,57 @@ function click(p,id){const e=p.d.getElementById(id);assert.ok(e,'Falta '+id);e.c
     ok(p.d.getElementById('mat-results').classList.contains('hidden'),'Descartar respuesta de entradas anteriores');
     eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
 
+    // Teclado compartido: eventos reales de input y selección sobre los seis módulos.
+    const teclas=p=>Array.from(p.d.querySelectorAll('.math-keyboard__key')).map(e=>e.textContent);
+    const tecla=(p,nombre)=>{const b=Array.from(p.d.querySelectorAll('.math-keyboard__key')).find(e=>e.textContent===nombre);ok(b,'Falta tecla '+nombre);b.click();};
+    p=await pagina('/ecuaciones');poner(p,'input-n','5');click(p,'btn-generate');click(p,'btn-perf-proceder');
+    let campo=p.d.getElementById('ecuacion-1');campo.focus();ok(teclas(p).includes('x5'));ok(!teclas(p).includes('sin'));
+    poner(p,'ecuacion-1','x1+x1=2');campo.setSelectionRange(2,3);tecla(p,'Espacio');eq(campo.value,'x1 x1=2');eq(campo.selectionStart,3);
+    poner(p,'ecuacion-1','x1 + x2 = 10 ');eq(campo.value,'x1 + x2 = 10 ','Conservar espacio físico al escribir');
+    campo.value='0.5×1 + 3.2×2 ';campo.setSelectionRange(5,5);
+    campo.dispatchEvent(new p.w.Event('input',{bubbles:true}));
+    eq(campo.value,'0.5x1 + 3.2x2 ','Mostrar x1 y x2 sin signo de multiplicación');
+    eq(campo.selectionStart,5,'Conservar el cursor después de corregir ×');
+    ok(teclas(p).includes('x1') && teclas(p).includes('*') && !teclas(p).includes('×'));
+    campo.dispatchEvent(new p.w.Event('compositionstart',{bubbles:true}));
+    campo.value='x1+×2';campo.dispatchEvent(new p.w.Event('input',{bubbles:true}));eq(campo.value,'x1+×2','No interferir en composición');
+    campo.dispatchEvent(new p.w.Event('compositionend',{bubbles:true}));eq(campo.value,'x1+x2');
+    poner(p,'ecuacion-1','x1 + x2 = 10 ');
+    campo.setSelectionRange(0,0);tecla(p,'3');eq(campo.value,'3x1 + x2 = 10 ');
+    campo.setSelectionRange(1,1);tecla(p,'⌫');eq(campo.value,'x1 + x2 = 10 ');
+    for(const ecuacion of ['2x1 - 3x2 + 4x3 = 5','x1 + x2 = 10','3x1 - 2x2 = -7','x1+x1=2','-.5x1+2x2=-1.25']) {
+        poner(p,'ecuacion-1',ecuacion);click(p,'btn-solve');await tick();eq(campo.value,ecuacion,'Conservar ecuación visible');
+    }
+    eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
+
+    p=await pagina('/matrices');campo=p.d.getElementById('mat-a');campo.focus();
+    for(const nombre of ['1','Espacio','2','Nueva fila','3'])tecla(p,nombre);
+    eq(campo.value,'1 2\n3');campo=p.d.getElementById('mat-c');campo.focus();ok(!teclas(p).includes('Nueva fila'));
+    tecla(p,'-');tecla(p,'2');eq(campo.value,'-2','Signo parcial de input number');
+    eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
+
+    p=await pagina('/vectores');campo=p.d.getElementById('vec-u');campo.focus();
+    for(const nombre of ['1',',','Espacio','-','2'])tecla(p,nombre);
+    eq(campo.value,'1, -2');p.d.getElementById('vec-conjunto').focus();ok(teclas(p).includes('Nueva fila'));
+    eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
+
+    p=await pagina('/conversion');campo=p.d.getElementById('conversion-number');campo.focus();
+    poner(p,'conversion-origen','2');ok(!teclas(p).includes('2'));
+    poner(p,'conversion-number','1A');poner(p,'conversion-origen','16');eq(campo.value,'1A');ok(teclas(p).includes('F'));
+    eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
+
+    p=await pagina('/romanos');campo=p.d.getElementById('romanos-input');campo.focus();
+    ok(!teclas(p).includes('M'));poner(p,'romanos-direccion','romano_a_arabigo');ok(teclas(p).includes('M'));ok(!teclas(p).includes('9'));
+    eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
+
+    p=await pagina('/raices');campo=p.d.getElementById('raices-funcion-raw');campo.focus();tecla(p,'sin');
+    eq(campo.value,'sin()');eq(campo.selectionStart,4);tecla(p,'x');eq(campo.value,'sin(x)');
+    ok(p.d.getElementById('math-preview-render').textContent.includes('sin'));
+    p.d.querySelector('.math-keyboard__close').click();ok(p.d.querySelector('.math-keyboard').hidden);
+    p.d.querySelector('.math-keyboard-toggle').click();ok(!p.d.querySelector('.math-keyboard').hidden);
+    p.d.getElementById('raices-xl').focus();ok(!teclas(p).includes('sin'));
+    eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
+
     for(const ruta of ['/raices','/matrices','/ecuaciones','/vectores','/conversion','/romanos']) {
         p=await pagina(ruta);
         eq(p.d.querySelectorAll('[id^="tanix-"]').length,0,'No deben existir controles de funciones retiradas');

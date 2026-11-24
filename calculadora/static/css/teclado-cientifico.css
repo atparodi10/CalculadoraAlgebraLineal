@@ -1,0 +1,85 @@
+.math-keyboard-toggle, .math-keyboard {
+    position: fixed;
+    z-index: 100;
+    font-family: inherit;
+}
+.math-keyboard-toggle[hidden], .math-keyboard[hidden], .math-keyboard__variables[hidden] { display: none; }
+.math-keyboard-toggle {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    background: var(--color-primary);
+    color: var(--text-on-primary);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    font-size: 22px;
+}
+.math-keyboard {
+    width: min(380px, calc(100vw - 16px));
+    max-height: min(75vh, 520px);
+    padding: 12px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-xl);
+}
+.math-keyboard__header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.math-keyboard__header strong { font-size: .9rem; }
+.math-keyboard__close {
+    background: transparent;
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    min-height: 36px;
+    min-width: 36px;
+    cursor: pointer;
+}
+.math-keyboard__keys { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.math-keyboard__variables {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    margin-top: 8px;
+    padding: 4px 2px;
+    scrollbar-width: thin;
+}
+.math-keyboard__key {
+    min-height: 42px;
+    min-width: 0;
+    padding: 4px;
+    border: 1px solid var(--border-input);
+    border-radius: 9px;
+    background: var(--bg-card-alt);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: .95rem;
+    font-weight: 600;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+.math-keyboard__variables .math-keyboard__key { flex: 0 0 47px; }
+.math-keyboard__key--edit { color: var(--color-primary); background: var(--color-primary-light); }
+.math-keyboard__key:hover, .math-keyboard__close:hover { border-color: var(--color-primary); }
+.math-keyboard__key:focus-visible, .math-keyboard__close:focus-visible, .math-keyboard-toggle:focus-visible {
+    outline: 3px solid var(--color-primary);
+    outline-offset: 2px;
+}
+@media (max-width: 700px) {
+    body.math-keyboard-open { padding-bottom: min(47vh, 360px); }
+    .math-keyboard {
+        width: 100%;
+        max-height: min(47vh, 360px);
+        left: 0;
+        bottom: 0;
+        border-radius: 16px 16px 0 0;
+        padding: 10px 12px max(10px, env(safe-area-inset-bottom));
+    }
+    .math-keyboard__keys { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .math-keyboard__key { min-height: 44px; font-size: .86rem; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .math-keyboard__key { transition: background .15s ease, border-color .15s ease; }
+}

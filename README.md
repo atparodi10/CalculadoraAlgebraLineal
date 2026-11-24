@@ -31,6 +31,10 @@ Abrir http://127.0.0.1:5000. Se conserva `requeriments.txt` como entrada compati
 
 La interfaz presenta los resultados y pasos de cada cálculo. Las solicitudes de entradas anteriores se cancelan o descartan para evitar mostrar resultados obsoletos. Se conservan la navegación, el tema claro/oscuro y las visualizaciones originales.
 
+## Teclado matemático
+
+Al enfocar una entrada matemática aparece un teclado compartido. El botón ⌨ lo oculta o vuelve a mostrar; ✕ o Escape lo cierran. En móviles el panel se coloca abajo. Las teclas disponibles siguen el campo: variables x1…xn en sistemas, filas y separadores en matrices, componentes en vectores, dígitos de la base de origen, símbolos romanos o funciones compatibles con el parser de raíces. El teclado físico sigue funcionando. Las ecuaciones conservan los espacios y la posición del cursor durante la edición; si el teclado físico introduce `×1` se muestra `x1` inmediatamente. La tecla `*` queda diferenciada para escribir, por ejemplo, `2*x1`. Al enviar se normaliza una copia del texto para el servidor.
+
 ## Entradas y correcciones
 
 **Raíces.** Gráfica y métodos utilizan el mismo parser seguro, sin ejecutar código. Admite `x`, `X`, `pi`, `π`, `e`, `sin`, `cos`, `tan`, `sqrt`, `ln`, `log` (base 10), `exp`, `abs`, `+ - * / ^ **` y una igualdad. Ejemplos: `2x (2)(x+1)`, `(x+1)2`, `3sin(x)`, `x^2=2`. La trigonometría usa radianes. Se respeta `-x^2=-(x^2)` y `2^3^2=2^(3^2)`.
@@ -74,6 +78,7 @@ npx playwright install chromium
 # En otra terminal:
 python -m flask --app calculadora run --port 5055
 node tests/navegador.cjs
+node tests/teclado.cjs
 ```
 
 Las pruebas DOM ejecutan scripts y plantillas reales contra Flask mediante `tests/puente_ui.py`, simulando Canvas. No verifican diseño ni renderizado nativo. Las pruebas Chromium revisan la interacción y la vista móvil. El workflow usa Ubuntu 24.04 para Playwright 1.56.1.

@@ -37,3 +37,4 @@ jobs:
         run: |
           python -m flask --app calculadora run --port 5055 > /tmp/tanix.log 2>&1 &
           node tests/navegador.cjs
+          node tests/teclado.cjs
