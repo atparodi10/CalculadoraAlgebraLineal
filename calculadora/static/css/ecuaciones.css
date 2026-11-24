@@ -1,1 +1,8 @@
 /* Ecuaciones page — no extra styles needed beyond base */
+#equation-list .form-input,
+#equation-container .info-box code {
+    /* Avoid the programming-font multiplication ligature in 2x1. */
+    font-family: 'Inter', system-ui, sans-serif;
+    font-variant-ligatures: none;
+    font-feature-settings: 'calt' 0, 'liga' 0;
+}

@@ -33,7 +33,11 @@ La interfaz presenta los resultados y pasos de cada cálculo. Las solicitudes de
 
 ## Teclado matemático
 
-Al enfocar una entrada matemática aparece un teclado compartido. El botón ⌨ lo oculta o vuelve a mostrar; ✕ o Escape lo cierran. En móviles el panel se coloca abajo. Las teclas disponibles siguen el campo: variables x1…xn en sistemas, filas y separadores en matrices, componentes en vectores, dígitos de la base de origen, símbolos romanos o funciones compatibles con el parser de raíces. El teclado físico sigue funcionando. Las ecuaciones conservan los espacios y la posición del cursor durante la edición; si el teclado físico introduce `×1` se muestra `x1` inmediatamente. La tecla `*` queda diferenciada para escribir, por ejemplo, `2*x1`. Al enviar se normaliza una copia del texto para el servidor.
+Al enfocar una entrada matemática aparece un teclado compartido. Arrastra la barra superior para moverlo, usa **Reubicar** para devolverlo a su posición inicial y el botón ⌨ para abrirlo o cerrarlo. Las teclas disponibles dependen del campo: variables x1…xn en sistemas, filas y separadores en matrices, componentes en vectores, dígitos de la base de origen y símbolos romanos. Las ecuaciones conservan espacios y cursor y muestran una `x` inequívoca.
+
+En raíces se utiliza un editor visual con fracciones apiladas, exponentes y radicales editables, navegación entre numerador y denominador, Euler elevado a una potencia y pestañas de funciones. El botón **Editar texto** permite usar la sintaxis original; **Editor visual** vuelve al editor si la expresión es válida. El editor transforma la notación a la sintaxis del parser de Flask, sin evaluar funciones en el navegador. La raíz de índice n se representa como una potencia `1/n` y sigue los límites de dominio real del motor existente. Las funciones trigonométricas usan radianes.
+
+MathQuill 0.10.1 (MPL 2.0), jQuery 3.7.1 (MIT) y la fuente Symbola distribuida con MathQuill se sirven localmente solo en la página de raíces. No es necesario instalar paquetes de JavaScript para ejecutar la aplicación. Los avisos de licencia están en `calculadora/static/vendor/mathquill/`.
 
 ## Entradas y correcciones
 

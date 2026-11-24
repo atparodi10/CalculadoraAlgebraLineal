@@ -13,6 +13,7 @@ const assert=require('node:assert/strict');
         });
         const base=process.env.TANIX_URL || 'http://127.0.0.1:5055';
         for(let i=0;i<30;i++){try{await page.goto(base+'/raices');break;}catch(e){if(i===29)throw e;await new Promise(r=>setTimeout(r,200));}}
+        await page.click('#math-source-toggle');
         const grafica=page.waitForResponse(r=>r.url().endsWith('/api/raices/evaluar'));
         await page.fill('#raices-funcion-raw','x^2=2');await page.fill('#raices-xl','0');await page.fill('#raices-xu','2');await page.fill('#raices-error','0.001');await grafica;
         assert.equal(await page.evaluate(()=>window.__etiquetas.includes('raíz')),false);

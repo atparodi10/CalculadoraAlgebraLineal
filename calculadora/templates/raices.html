@@ -3,6 +3,7 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/raices.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='vendor/mathquill/mathquill.css') }}">
 {% endblock %}
 
 {% block content %}
@@ -35,7 +36,13 @@
                        id="raices-funcion-raw"
                        placeholder="Ej: x^2 - 2,  raiz(x+3) - x,  x^2 = 2"
                        autocomplete="off" spellcheck="false">
+                <span id="raices-funcion-visual" class="math-visual-field" hidden></span>
             </div>
+            <div class="math-editor__options">
+                <span>Selecciona una parte de la expresión para editarla.</span>
+                <button type="button" id="math-source-toggle" hidden aria-pressed="false">Editar texto</button>
+            </div>
+            <small id="math-source-status" role="status"></small>
             <small class="form-hint">
                 Soporta: <code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>^</code>
                 &nbsp;|&nbsp; <code>sen</code> <code>cos</code> <code>tan</code> <code>exp</code>
@@ -217,5 +224,8 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{{ url_for('static', filename='vendor/mathquill/jquery.min.js') }}"></script>
+<script src="{{ url_for('static', filename='vendor/mathquill/mathquill.js') }}"></script>
+<script src="{{ url_for('static', filename='js/editor-matematico.js') }}"></script>
 <script src="{{ url_for('static', filename='js/raices.js') }}"></script>
 {% endblock %}

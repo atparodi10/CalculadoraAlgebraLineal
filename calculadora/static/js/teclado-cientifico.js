@@ -15,7 +15,7 @@
         conversion: { '#conversion-number': 'base' },
         romanos: { '#romanos-input': 'roman' },
         raices: {
-            '#raices-funcion-raw': 'function',
+            '#raices-funcion-raw, #raices-funcion-visual': 'function',
             '#raices-error, #raices-xl, #raices-xu, #raices-x0-newton, #raices-xm1, #raices-x0-secante': 'number',
             '#raices-maxiter': 'integer'
         }
@@ -23,6 +23,7 @@
 
     const digits = '7894561230'.split('');
     const key = (label, insert = label, aria = label, offset = 0) => ({ label, insert, aria, offset });
+    const structure = (label, insert, aria, action, offset = 0) => ({ ...key(label, insert, aria, offset), action });
     const numeric = digits.map(d => key(d));
     const edit = [key('←', null, 'Mover cursor a la izquierda'), key('→', null, 'Mover cursor a la derecha'),
         key('⌫', null, 'Retroceso'), key('AC', null, 'Limpiar campo')];
@@ -33,10 +34,17 @@
         matrix: [key('.'), key('-'), key('Espacio', ' '), key(',', ','), key('Nueva fila', '\n')],
         vector: [key('.'), key('-'), key('Espacio', ' '), key(',', ',')],
         function: [key('.'), key('+'), key('−', '-'), key('×', '*'), key('÷', '/'), key('='),
-            key('('), key(')'), key('x'), key('x²', '^2'), key('x³', '^3'), key('xʸ', '^'),
-            key('√', 'sqrt()', 'Raíz cuadrada', -1),
-            ...['sin', 'cos', 'tan', 'ln', 'log', 'exp', 'abs'].map(name => key(name, `${name}()`, name, -1)),
-            key('π', 'pi'), key('e')]
+            key('('), key(')'), key('x'),
+            structure('a²', '^2', 'Elevar al cuadrado', 'square'),
+            structure('a³', '^3', 'Elevar al cubo', 'cube'),
+            structure('aᵇ', '^()', 'Potencia general', 'power', -1),
+            structure('eˣ', 'e^()', 'Euler elevado a una potencia', 'euler', -1),
+            structure('√', 'sqrt()', 'Raíz cuadrada', 'root', -1),
+            structure('ⁿ√', '()^(1/())', 'Raíz de índice n', 'nthroot', -8),
+            structure('a/b', '()/()', 'Fracción', 'fraction', -4),
+            structure('|a|', 'abs()', 'Valor absoluto', 'abs', -1),
+            ...['sin', 'cos', 'tan', 'ln', 'log', 'exp'].map(name => structure(name, `${name}()`, name, 'function', -1)),
+            structure('π', 'pi', 'Pi', 'pi'), key('e')]
     };
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -61,19 +69,28 @@
         panel.id = 'math-keyboard';
         panel.hidden = true;
         panel.setAttribute('aria-label', 'Teclado matemático');
-        panel.innerHTML = '<div class="math-keyboard__header"><strong>Teclado matemático</strong>' +
+        panel.innerHTML = '<div class="math-keyboard__header"><div class="math-keyboard__title"><span class="math-keyboard__grip" aria-hidden="true">⠿</span><div><small>LINEAL TANIX</small><strong>Teclado matemático</strong></div></div>' +
             '<button class="math-keyboard__close" type="button" aria-label="Cerrar teclado">✕</button></div>' +
-            '<div class="math-keyboard__keys"></div><div class="math-keyboard__variables" aria-label="Variables disponibles"></div>';
+            '<div class="math-keyboard__tabs" aria-label="Tipo de teclado"><button type="button" data-tab="main" aria-pressed="true">Principal</button><button type="button" data-tab="functions" aria-pressed="false">Funciones</button></div>' +
+            '<div class="math-keyboard__layout"><div class="math-keyboard__science"></div><div class="math-keyboard__keys"></div><div class="math-keyboard__actions"></div></div>' +
+            '<div class="math-keyboard__variables" aria-label="Variables disponibles"></div><div class="math-keyboard__foot"><span>Arrastra la barra superior para mover el teclado</span><button type="button" class="math-keyboard__reset">Reubicar</button></div>';
         toggle.setAttribute('aria-controls', panel.id);
         document.body.append(toggle, panel);
         const keys = panel.querySelector('.math-keyboard__keys');
+        const science = panel.querySelector('.math-keyboard__science');
+        const actions = panel.querySelector('.math-keyboard__actions');
+        const tabs = panel.querySelector('.math-keyboard__tabs');
         const variables = panel.querySelector('.math-keyboard__variables');
         let active = null;
         let buffer = new WeakMap();
         let virtualInput = false;
+        let tab = 'main';
+        let moved = null;
+        let drag = null;
 
         function profileFor(field) {
             if (!(field instanceof HTMLElement) || field.disabled || field.readOnly) return null;
+            field = field.closest('#raices-funcion-visual') || field;
             for (const [selector, profile] of Object.entries(pages[page])) {
                 if (field.matches(selector)) return profile;
             }
@@ -102,45 +119,65 @@
             const profile = profileFor(active);
             const buttons = currentKeys(profile).concat(edit.filter(item =>
                 active.type !== 'number' || !['←', '→'].includes(item.label)));
+            const isScientific = profile === 'function';
+            const visual = Boolean(active.mathEditor);
+            panel.classList.toggle('math-keyboard--scientific', isScientific);
+            tabs.hidden = !isScientific;
+            for (const button of tabs.querySelectorAll('button')) button.setAttribute('aria-pressed', String(button.dataset.tab === tab));
             function buttonFor(item) {
                 const button = document.createElement('button');
                 button.type = 'button';
                 button.className = 'math-keyboard__key' + (item.insert === null ? ' math-keyboard__key--edit' : '');
+                if (/^[0-9]$/.test(item.label)) button.classList.add('math-keyboard__key--digit');
+                if (['+','−','-','×','÷','*','=','(',')'].includes(item.label)) button.classList.add('math-keyboard__key--operator');
+                if (item.action) button.classList.add('math-keyboard__key--science');
                 button.textContent = item.label;
+                if (item.action === 'fraction') {
+                    button.classList.add('math-keyboard__key--fraction');
+                    button.innerHTML = '<span>a</span><span>b</span>';
+                }
                 button.setAttribute('aria-label', item.aria);
                 button._mathKey = item;
                 return button;
             }
-            keys.replaceChildren(...buttons.filter(item => !/^x\d+$/.test(item.label)).map(buttonFor));
+            if (isScientific) {
+                const labels = tab === 'main' ? ['a²','aᵇ','a/b','√','ⁿ√','eˣ','sin','cos','tan','(',')','π']
+                    : ['ln','log','exp','|a|','a³','e','sin','cos','tan','(',')','π'];
+                science.replaceChildren(...labels.map(label => buttonFor(buttons.find(item => item.label === label))));
+                keys.replaceChildren(...['7','8','9','÷','4','5','6','×','1','2','3','−','0','.','x','+'].map(label => buttonFor(buttons.find(item => item.label === label))));
+                actions.replaceChildren(...[key('←', null, 'Mover cursor a la izquierda'), key('→', null, 'Mover cursor a la derecha'),
+                    ...(visual ? [key('↑', null, 'Subir al numerador'), key('↓', null, 'Bajar al denominador')] : []),
+                    ...buttons.filter(item => ['=', '⌫', 'AC'].includes(item.label))].map(buttonFor));
+            } else {
+                science.replaceChildren();
+                keys.replaceChildren(...buttons.filter(item => item.insert !== null && !/^x\d+$/.test(item.label)).map(buttonFor));
+                actions.replaceChildren(...buttons.filter(item => item.insert === null).map(buttonFor));
+            }
             variables.replaceChildren(...buttons.filter(item => /^x\d+$/.test(item.label)).map(buttonFor));
             variables.hidden = profile !== 'equation';
             panel.querySelector('strong').textContent = ({
                 equation: 'Ecuaciones lineales', matrix: 'Matriz', vector: 'Vector',
                 number: 'Número', integer: 'Entero', base: 'Base de origen',
-                roman: 'Números romanos', function: 'Función f(x)'
+                roman: 'Números romanos', function: 'Calculadora científica · f(x)'
             })[profile];
             position();
         }
 
         function position() {
             if (!active || !active.isConnected) return;
+            if (panel.hidden) return;
             const rect = active.getBoundingClientRect();
-            if (matchMedia('(max-width: 700px)').matches) {
-                toggle.style.left = `${Math.max(8, Math.min(innerWidth - 50, rect.right - 43))}px`;
-                toggle.style.top = `${Math.max(8, Math.min(innerHeight - 50, rect.top + 4))}px`;
-                panel.style.left = '';
-                panel.style.top = '';
-            } else {
-                toggle.style.left = `${Math.max(8, Math.min(innerWidth - 48, rect.right + 8))}px`;
-                toggle.style.top = `${Math.max(8, rect.top)}px`;
-                const width = Math.min(380, innerWidth - 16);
-                const fitsRight = rect.right + width + 60 < innerWidth;
-                const fitsLeft = rect.left - width - 8 > 0;
-                panel.style.left = `${fitsRight ? rect.right + 52 : fitsLeft ? rect.left - width - 8 : Math.max(8, (innerWidth - width) / 2)}px`;
-                const height = Math.min(panel.offsetHeight || 350, innerHeight - 16);
-                panel.style.top = `${fitsRight || fitsLeft ? Math.max(8, Math.min(innerHeight - height - 8, rect.top)) :
-                    rect.bottom + height + 8 < innerHeight ? rect.bottom + 8 : Math.max(8, rect.top - height - 8)}px`;
-            }
+            const width = panel.offsetWidth || Math.min(600, innerWidth - 16);
+            const height = panel.offsetHeight || 350;
+            const mobile = innerWidth <= 700;
+            const left = moved?.left ?? (mobile ? (innerWidth - width) / 2 :
+                rect.right + width + 16 < innerWidth ? rect.right + 12 : innerWidth - width - 18);
+            const fitsBelow = rect.bottom + height + 12 < innerHeight;
+            const fitsAbove = rect.top - height - 12 > 0;
+            const top = moved?.top ?? (mobile && rect.bottom < innerHeight - height - 8 ? innerHeight - height - 8 :
+                fitsBelow ? rect.bottom + 10 : fitsAbove ? rect.top - height - 10 : innerHeight - height - 8);
+            panel.style.left = `${Math.max(8, Math.min(innerWidth - width - 8, left))}px`;
+            panel.style.top = `${Math.max(8, Math.min(innerHeight - height - 8, top))}px`;
         }
 
         function close() {
@@ -167,6 +204,7 @@
         function editField(item) {
             if (!active || !active.isConnected) { close(); return; }
             const field = active;
+            if (field.mathEditor) { field.mathEditor.apply(item); position(); return; }
             const isNumber = field.type === 'number';
             const start = isNumber ? field.value.length : field.selectionStart;
             const end = isNumber ? start : field.selectionEnd;
@@ -211,9 +249,11 @@
         document.addEventListener('focusin', event => {
             const profile = profileFor(event.target);
             if (!profile) return;
-            if (active !== event.target) {
-                active = event.target;
+            const target = event.target.closest('#raices-funcion-visual') || event.target;
+            if (active !== target) {
+                active = target;
                 buffer = new WeakMap();
+                tab = 'main';
             }
             toggle.hidden = false;
             open();
@@ -224,15 +264,36 @@
         });
         toggle.addEventListener('pointerdown', event => { if (event.cancelable) event.preventDefault(); });
         panel.addEventListener('click', event => {
-            if (event.target.closest('.math-keyboard__close')) { close(); active?.focus({ preventScroll: true }); return; }
+            if (event.target.closest('.math-keyboard__close')) { close(); return; }
+            if (event.target.closest('.math-keyboard__reset')) { moved = null; position(); return; }
+            const tabButton = event.target.closest('[data-tab]');
+            if (tabButton) { tab = tabButton.dataset.tab; render(); return; }
             const button = event.target.closest('.math-keyboard__key');
             if (button) editField(button._mathKey);
         });
+        panel.querySelector('.math-keyboard__header').addEventListener('pointerdown', event => {
+            if (event.target.closest('button') || event.button !== 0) return;
+            const rect = panel.getBoundingClientRect();
+            drag = { id: event.pointerId, x: event.clientX - rect.left, y: event.clientY - rect.top };
+            panel.classList.add('math-keyboard--dragging');
+            event.preventDefault();
+        });
+        document.addEventListener('pointermove', event => {
+            if (!drag || drag.id !== event.pointerId) return;
+            moved = { left: event.clientX - drag.x, top: event.clientY - drag.y };
+            position();
+        });
+        function endDrag(event) {
+            if (!drag || drag.id !== event.pointerId) return;
+            drag = null; panel.classList.remove('math-keyboard--dragging');
+        }
+        document.addEventListener('pointerup', endDrag);
+        document.addEventListener('pointercancel', endDrag);
         toggle.addEventListener('click', () => { if (panel.hidden) open(); else close(); });
         document.addEventListener('pointerdown', event => {
             if (panel.contains(event.target) || event.target === toggle || profileFor(event.target)) return;
             close();
-            toggle.hidden = true;
+            // Leave the launcher available after closing; it reopens the last field.
         });
         document.addEventListener('keydown', event => {
             if (event.key === 'Escape' && !panel.hidden) close();

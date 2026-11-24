@@ -164,6 +164,36 @@ function click(p,id){const e=p.d.getElementById(id);assert.ok(e,'Falta '+id);e.c
     p.d.querySelector('.math-keyboard__close').click();ok(p.d.querySelector('.math-keyboard').hidden);
     p.d.querySelector('.math-keyboard-toggle').click();ok(!p.d.querySelector('.math-keyboard').hidden);
     p.d.getElementById('raices-xl').focus();ok(!teclas(p).includes('sin'));
+    const visual=p.d.getElementById('raices-funcion-visual');
+    const raw=p.d.getElementById('raices-funcion-raw');
+    ok(!visual.hidden && raw.hidden,'El editor matemático es el modo inicial');
+    const mq=p.w.MathQuill.getInterface(2)(visual);
+    const teclaAria=nombre=>{const b=Array.from(p.d.querySelectorAll('.math-keyboard__key')).find(e=>e.getAttribute('aria-label')===nombre);ok(b,'Falta '+nombre);b.click();};
+    mq.latex('');visual.mathEditor.focus();
+    teclaAria('Fracción');tecla(p,'2');tecla(p,'↓');tecla(p,'3');
+    eq(raw.value,'((2)/(3))','La fracción visual produce una expresión agrupada');
+    ok(visual.querySelector('.mq-fraction'),'Fracción apilada real');
+    tecla(p,'AC');teclaAria('Euler elevado a una potencia');tecla(p,'x');tecla(p,'+');tecla(p,'2');
+    eq(raw.value,'e^(x+2)','El exponente compuesto no pierde sus paréntesis');
+    ok(visual.querySelector('.mq-supsub'),'Exponente visual');
+    tecla(p,'→');tecla(p,'+');teclaAria('Raíz cuadrada');tecla(p,'9');
+    eq(raw.value,'e^(x+2)+sqrt(9)');ok(visual.querySelector('.mq-sqrt-prefix'),'Radical visible');
+    const evaluado=backend('/api/raices/evaluar',{funcion:raw.value,x_min:0,x_max:1,n_puntos:2});
+    eq(evaluado.status,200);ok(Math.abs(evaluado.body.puntos[0].y-(Math.exp(2)+3))<1e-10,'El servidor evalúa el exponente compuesto y la raíz');
+    tecla(p,'AC');tecla(p,'sin');tecla(p,'x');tecla(p,')');eq(raw.value,'sin(x)');
+    p.d.querySelector('[data-tab="functions"]').click();ok(teclas(p).includes('ln'));tecla(p,'AC');tecla(p,'ln');tecla(p,'2');tecla(p,')');eq(raw.value,'ln(2)');
+    // Switch to source and back; grouping and server evaluation remain consistent.
+    p.d.getElementById('math-source-toggle').click();ok(!raw.hidden && visual.hidden);
+    poner(p,'raices-funcion-raw','(x+1)/(x-1)+e^(x+2)');p.d.getElementById('math-source-toggle').click();
+    ok(raw.hidden && !visual.hidden);ok(visual.querySelector('.mq-fraction'));
+    mq.latex('\\frac{2}{3}^{2}+\\sqrt{9}');eq(raw.value,'((2)/(3))^(2)+sqrt(9)');
+    mq.latex('\\sqrt[3]{8}');eq(raw.value,'((8)^(1/(3)))');
+    mq.latex('\\left|x-2\\right|');eq(raw.value,'abs(x-2)');
+    const header=p.d.querySelector('.math-keyboard__header');
+    function pointer(target,type,x,y){const e=new p.w.MouseEvent(type,{bubbles:true,cancelable:true,clientX:x,clientY:y,button:0});Object.defineProperty(e,'pointerId',{value:1});target.dispatchEvent(e);}
+    pointer(header,'pointerdown',10,10);pointer(p.d,'pointermove',100,130);pointer(p.d,'pointerup',100,130);
+    const panel=p.d.querySelector('.math-keyboard');eq(panel.style.left,'90px');eq(panel.style.top,'120px');
+    visual.mathEditor.focus();eq(panel.style.left,'90px','La posición manual se conserva');
     eq(p.errores.length,0,p.errores.join('\n'));p.dom.window.close();
 
     for(const ruta of ['/raices','/matrices','/ecuaciones','/vectores','/conversion','/romanos']) {
