@@ -189,6 +189,37 @@ function click(p,id){const e=p.d.getElementById(id);assert.ok(e,'Falta '+id);e.c
     mq.latex('\\frac{2}{3}^{2}+\\sqrt{9}');eq(raw.value,'((2)/(3))^(2)+sqrt(9)');
     mq.latex('\\sqrt[3]{8}');eq(raw.value,'((8)^(1/(3)))');
     mq.latex('\\left|x-2\\right|');eq(raw.value,'abs(x-2)');
+    // The reference screenshot contains a (1/x) with an empty exponent. Detect it
+    // before any graph, interval or calculation request, and focus the exact block.
+    mq.latex('\\frac{e\\left(\\frac{1}{x}^{ }\\right)+2x}{\\ln\\left(x\\right)}');
+    ok(raw.dataset.mathError.toLowerCase().includes('exponente'));
+    const llamadas=[];const fetchOriginal=p.w.fetch;
+    p.w.fetch=(url,options)=>{llamadas.push(String(url));return fetchOriginal(url,options);};
+    click(p,'raices-submit');await new Promise(r=>setTimeout(r,380));
+    ok(!llamadas.some(url=>url.includes('/api/raices')),'No enviar una expresión incompleta a Flask');
+    eq(visual.mathEditor.location(),'Numerador › Interior de paréntesis › Exponente');
+    ok(visual.querySelector('.mq-sup.math-active-slot.math-empty-slot'),'El hueco está destacado');
+    p.w.fetch=fetchOriginal;
+
+    // Build the document's nested e^(1/x) + 2x/tan(x) = 2 using the new navigation.
+    let cambios=0;raw.addEventListener('input',()=>cambios++);
+    tecla(p,'AC');p.d.querySelector('[data-tab="main"]').click();
+    teclaAria('Euler elevado a una potencia');eq(visual.mathEditor.location(),'Exponente');
+    teclaAria('Fracción');eq(visual.mathEditor.location(),'Exponente › Numerador');
+    tecla(p,'1');let prev=cambios;teclaAria('Siguiente campo');eq(cambios,prev,'Navegar no invalida el gráfico');
+    eq(visual.mathEditor.location(),'Exponente › Denominador');
+    tecla(p,'x');teclaAria('Salir del nivel actual');eq(visual.mathEditor.location(),'Exponente');
+    teclaAria('Salir del nivel actual');eq(visual.mathEditor.location(),'Expresión principal');
+    tecla(p,'+');teclaAria('Fracción');tecla(p,'2');tecla(p,'x');teclaAria('Siguiente campo');
+    tecla(p,'tan');tecla(p,'x');teclaAria('Ir al final de la expresión');eq(visual.mathEditor.location(),'Expresión principal');
+    tecla(p,'=');tecla(p,'2');
+    eq(raw.dataset.mathError,'');eq(raw.value,'e^(((1)/(x)))+((2 x)/(tan(x)))=2');
+    const compuesto=backend('/api/raices',{funcion:raw.value,metodo:'newton_raphson',x0:1.5,error_esperado:0.0001,max_iter:100});
+    eq(compuesto.status,200);ok(compuesto.body.convergencia);ok(Math.abs(compuesto.body.resultado-1.542396006148898)<1e-8);
+    teclaAria('Raíz cuadrada');eq(visual.mathEditor.location(),'Radicando');
+    teclaAria('Salir del nivel actual');eq(visual.mathEditor.location(),'Expresión principal');
+    ok(raw.dataset.mathError.includes('radicando'));
+    tecla(p,'AC');eq(raw.dataset.mathError,'');
     const header=p.d.querySelector('.math-keyboard__header');
     function pointer(target,type,x,y){const e=new p.w.MouseEvent(type,{bubbles:true,cancelable:true,clientX:x,clientY:y,button:0});Object.defineProperty(e,'pointerId',{value:1});target.dispatchEvent(e);}
     pointer(header,'pointerdown',10,10);pointer(p.d,'pointermove',100,130);pointer(p.d,'pointerup',100,130);

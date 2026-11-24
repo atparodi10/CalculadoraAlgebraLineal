@@ -37,6 +37,8 @@ Al enfocar una entrada matemática aparece un teclado compartido. Arrastra la ba
 
 En raíces se utiliza un editor visual con fracciones apiladas, exponentes y radicales editables, navegación entre numerador y denominador, Euler elevado a una potencia y pestañas de funciones. El botón **Editar texto** permite usar la sintaxis original; **Editor visual** vuelve al editor si la expresión es válida. El editor transforma la notación a la sintaxis del parser de Flask, sin evaluar funciones en el navegador. La raíz de índice n se representa como una potencia `1/n` y sigue los límites de dominio real del motor existente. Las funciones trigonométricas usan radianes.
 
+El campo activo de una fracción, potencia o raíz se resalta, y la ruta de edición aparece bajo la expresión y en el teclado. **Siguiente** (Tab) avanza al siguiente campo, **Anterior** (Shift+Tab) retrocede, **Salir** (Esc) vuelve al nivel exterior y **Fin** mueve el cursor al final de la expresión. Enter sale del nivel actual antes de calcular. Los huecos se identifican antes de enviar una solicitud, y al intentar calcular se selecciona el primer hueco pendiente. La gráfica se actualiza al completar la entrada, sin reiniciar los resultados por el simple movimiento del cursor.
+
 MathQuill 0.10.1 (MPL 2.0), jQuery 3.7.1 (MIT) y la fuente Symbola distribuida con MathQuill se sirven localmente solo en la página de raíces. No es necesario instalar paquetes de JavaScript para ejecutar la aplicación. Los avisos de licencia están en `calculadora/static/vendor/mathquill/`.
 
 ## Entradas y correcciones

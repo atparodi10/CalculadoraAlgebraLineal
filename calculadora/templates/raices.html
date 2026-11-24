@@ -39,8 +39,13 @@
                 <span id="raices-funcion-visual" class="math-visual-field" hidden></span>
             </div>
             <div class="math-editor__options">
-                <span>Selecciona una parte de la expresión para editarla.</span>
+                <span>Haz clic dentro de la expresión o usa las flechas para moverte.</span>
                 <button type="button" id="math-source-toggle" hidden aria-pressed="false">Editar texto</button>
+            </div>
+            <div id="math-location" class="math-location" hidden>
+                <span class="math-location__label">Escribiendo en</span>
+                <strong id="math-location-path" aria-live="polite">Expresión principal</strong>
+                <span id="math-location-hint">Tab: siguiente campo · Esc: salir del nivel</span>
             </div>
             <small id="math-source-status" role="status"></small>
             <small class="form-hint">
@@ -53,7 +58,7 @@
             </small>
         </div>
         <div class="math-editor__preview" id="math-preview">
-            <span class="math-editor__preview-label">Vista previa</span>
+            <span class="math-editor__preview-label">Sintaxis de cálculo</span>
             <div class="math-editor__preview-render" id="math-preview-render"></div>
         </div>
     </div>

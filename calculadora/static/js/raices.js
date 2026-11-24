@@ -541,9 +541,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     function solicitarDatosGrafica() {
         const funcion = funcionInput.value.trim();
-        if (!funcion) {
+        if (!funcion || funcionInput.dataset.mathError) {
+            fetchAbort?.abort();
+            graficaPeticion += 1;
             graphData = null;
-            graphStatus.textContent = '';
+            graphStatus.textContent = funcionInput.dataset.mathError ? 'Completa la expresión' : '';
             dibujarGrafica();
             return;
         }
@@ -960,6 +962,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // VALIDACIÓN DE INTERVALO (2-way binding)
     // =========================================
     function validarIntervalo() {
+        if (funcionInput.dataset.mathError) {
+            intervaloStatus.textContent = 'Completa la expresión antes de validar el intervalo.';
+            intervaloStatus.classList.remove('hidden');
+            return;
+        }
         const metodo = metodoSelect.value;
         if (metodo !== 'biseccion' && metodo !== 'regla_falsa') {
             intervaloStatus.classList.add('hidden');
@@ -1039,6 +1046,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     buscarLimitesBtn.addEventListener('click', () => {
         const funcion = funcionInput.value.trim();
+        if (!funcionLista()) return;
         if (!funcion) {
             mostrarError('Escribe la función primero.');
             return;
@@ -1147,10 +1155,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================
     // VALIDACIONES
     // =========================================
+    function funcionLista() {
+        if (!funcionInput.dataset.mathError) return true;
+        const visual = document.getElementById('raices-funcion-visual');
+        if (!funcionInput.hidden) funcionInput.focus();
+        else visual?.mathEditor?.focusMissing();
+        return false;
+    }
     function validarCampos() {
         const funcion = funcionInput.value.trim();
         const metodo = metodoSelect.value;
         const errorEa = parseFloat(errorInput.value);
+        if (!funcionLista()) return null;
 
         if (!funcion) {
             mostrarError('Por favor, ingresa la función f(x).');
@@ -1474,7 +1490,10 @@ document.addEventListener('DOMContentLoaded', () => {
     funcionInput.addEventListener('input', () => {
         renderizarPreview(funcionInput.value);
         invalidarResultado();
-        debounceSolicitarDatos();
+        if (funcionInput.dataset.mathError) {
+            clearTimeout(debounceTimer);
+            solicitarDatosGrafica();
+        } else debounceSolicitarDatos();
     });
 
     // Inputs de intervalo → invalidar + redibujar + validar

@@ -89,6 +89,22 @@
 }
 .math-visual-field.mq-focused { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-glow); }
 .math-visual-field .mq-cursor { border-color: var(--color-primary); }
+.math-visual-field.mq-focused .mq-cursor { border-left: 2px solid var(--color-primary); margin-left: -2px; }
+.math-visual-field.mq-focused .mq-cursor.mq-blink { visibility: visible; opacity: .45; }
+.math-visual-field .math-active-slot {
+    background-color: var(--color-primary-light);
+    outline: 1.5px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 3px;
+}
+.math-visual-field .math-empty-slot {
+    min-width: .6em;
+    background-color: var(--color-primary-light);
+    outline: 1px dashed var(--color-primary);
+    outline-offset: 1px;
+    border-radius: 2px;
+}
+.math-visual-field .math-empty-slot.math-active-slot { outline-style: solid; outline-width: 2px; }
 .math-visual-field .mq-root-block { overflow-x: auto; overflow-y: hidden; min-height: 1.35em; }
 .math-visual-field .mq-empty { background: var(--color-primary-light); }
 .math-visual-field .mq-selection, .math-visual-field .mq-selection .mq-non-leaf { background: var(--color-primary-light) !important; color: inherit !important; }
@@ -96,6 +112,23 @@
 #math-source-toggle { border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-card-alt); color: var(--text-primary); font: inherit; font-weight: 650; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
 #math-source-status { color: var(--color-danger); font-size: .8rem; }
 #math-source-status:empty { display: none; }
+.math-location, .math-keyboard__location {
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    padding: 8px 10px; border-radius: 8px;
+    background: var(--color-primary-light); color: var(--text-primary);
+    font-size: .78rem; line-height: 1.4;
+}
+.math-location[hidden] { display: none; }
+.math-location__label, .math-keyboard__location span { color: var(--text-secondary); }
+#math-location-hint { flex-basis: 100%; color: var(--text-secondary); font-size: .72rem; }
+.math-keyboard__location { margin: 9px 12px 0; overflow-wrap: anywhere; }
+.math-keyboard__location strong { font-size: .8rem; }
+.math-keyboard__navigation { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 5px; padding: 0 12px 10px; }
+.math-keyboard__navigation .math-keyboard__key { min-height: 38px; font: 650 .77rem/1.15 'Inter',system-ui,sans-serif; }
+.math-keyboard__navigation .math-keyboard__key:nth-child(n+3) { background: var(--color-primary-light); color: var(--text-primary); }
+@media (max-width: 450px) {
+    .math-keyboard__navigation { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
 @media (max-width: 700px) {
     body.math-keyboard-open { padding-bottom: 330px; }
     .math-keyboard { max-height: min(65dvh, 380px); }

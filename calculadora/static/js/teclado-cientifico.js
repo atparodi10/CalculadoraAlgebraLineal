@@ -71,8 +71,10 @@
         panel.setAttribute('aria-label', 'Teclado matemático');
         panel.innerHTML = '<div class="math-keyboard__header"><div class="math-keyboard__title"><span class="math-keyboard__grip" aria-hidden="true">⠿</span><div><small>LINEAL TANIX</small><strong>Teclado matemático</strong></div></div>' +
             '<button class="math-keyboard__close" type="button" aria-label="Cerrar teclado">✕</button></div>' +
+            '<div class="math-keyboard__location" hidden><span>Escribiendo en</span><strong>Expresión principal</strong></div>' +
             '<div class="math-keyboard__tabs" aria-label="Tipo de teclado"><button type="button" data-tab="main" aria-pressed="true">Principal</button><button type="button" data-tab="functions" aria-pressed="false">Funciones</button></div>' +
             '<div class="math-keyboard__layout"><div class="math-keyboard__science"></div><div class="math-keyboard__keys"></div><div class="math-keyboard__actions"></div></div>' +
+            '<div class="math-keyboard__navigation" hidden aria-label="Navegar por la expresión"></div>' +
             '<div class="math-keyboard__variables" aria-label="Variables disponibles"></div><div class="math-keyboard__foot"><span>Arrastra la barra superior para mover el teclado</span><button type="button" class="math-keyboard__reset">Reubicar</button></div>';
         toggle.setAttribute('aria-controls', panel.id);
         document.body.append(toggle, panel);
@@ -80,12 +82,15 @@
         const science = panel.querySelector('.math-keyboard__science');
         const actions = panel.querySelector('.math-keyboard__actions');
         const tabs = panel.querySelector('.math-keyboard__tabs');
+        const location = panel.querySelector('.math-keyboard__location');
+        const navigation = panel.querySelector('.math-keyboard__navigation');
         const variables = panel.querySelector('.math-keyboard__variables');
         let active = null;
         let buffer = new WeakMap();
         let virtualInput = false;
         let tab = 'main';
         let moved = null;
+        let autoAnchor = null;
         let drag = null;
 
         function profileFor(field) {
@@ -123,6 +128,9 @@
             const visual = Boolean(active.mathEditor);
             panel.classList.toggle('math-keyboard--scientific', isScientific);
             tabs.hidden = !isScientific;
+            location.hidden = !visual;
+            navigation.hidden = !visual;
+            if (visual) location.querySelector('strong').textContent = active.mathEditor.location();
             for (const button of tabs.querySelectorAll('button')) button.setAttribute('aria-pressed', String(button.dataset.tab === tab));
             function buttonFor(item) {
                 const button = document.createElement('button');
@@ -153,6 +161,12 @@
                 keys.replaceChildren(...buttons.filter(item => item.insert !== null && !/^x\d+$/.test(item.label)).map(buttonFor));
                 actions.replaceChildren(...buttons.filter(item => item.insert === null).map(buttonFor));
             }
+            navigation.replaceChildren(...(visual ? [
+                structure('‹ Anterior', null, 'Campo anterior', 'previous'),
+                structure('Siguiente ›', null, 'Siguiente campo', 'next'),
+                structure('↗ Salir', null, 'Salir del nivel actual', 'exit'),
+                structure('Fin ↦', null, 'Ir al final de la expresión', 'end')
+            ].map(buttonFor) : []));
             variables.replaceChildren(...buttons.filter(item => /^x\d+$/.test(item.label)).map(buttonFor));
             variables.hidden = profile !== 'equation';
             panel.querySelector('strong').textContent = ({
@@ -170,14 +184,15 @@
             const width = panel.offsetWidth || Math.min(600, innerWidth - 16);
             const height = panel.offsetHeight || 350;
             const mobile = innerWidth <= 700;
-            const left = moved?.left ?? (mobile ? (innerWidth - width) / 2 :
+            const left = moved?.left ?? autoAnchor?.left ?? (mobile ? (innerWidth - width) / 2 :
                 rect.right + width + 16 < innerWidth ? rect.right + 12 : innerWidth - width - 18);
             const fitsBelow = rect.bottom + height + 12 < innerHeight;
             const fitsAbove = rect.top - height - 12 > 0;
-            const top = moved?.top ?? (mobile && rect.bottom < innerHeight - height - 8 ? innerHeight - height - 8 :
+            const top = moved?.top ?? autoAnchor?.top ?? (mobile && rect.bottom < innerHeight - height - 8 ? innerHeight - height - 8 :
                 fitsBelow ? rect.bottom + 10 : fitsAbove ? rect.top - height - 10 : innerHeight - height - 8);
             panel.style.left = `${Math.max(8, Math.min(innerWidth - width - 8, left))}px`;
             panel.style.top = `${Math.max(8, Math.min(innerHeight - height - 8, top))}px`;
+            if (!moved && !autoAnchor) autoAnchor = { left: parseFloat(panel.style.left), top: parseFloat(panel.style.top) };
         }
 
         function close() {
@@ -254,6 +269,7 @@
                 active = target;
                 buffer = new WeakMap();
                 tab = 'main';
+                autoAnchor = null;
             }
             toggle.hidden = false;
             open();
@@ -265,7 +281,7 @@
         toggle.addEventListener('pointerdown', event => { if (event.cancelable) event.preventDefault(); });
         panel.addEventListener('click', event => {
             if (event.target.closest('.math-keyboard__close')) { close(); return; }
-            if (event.target.closest('.math-keyboard__reset')) { moved = null; position(); return; }
+            if (event.target.closest('.math-keyboard__reset')) { moved = null; autoAnchor = null; position(); return; }
             const tabButton = event.target.closest('[data-tab]');
             if (tabButton) { tab = tabButton.dataset.tab; render(); return; }
             const button = event.target.closest('.math-keyboard__key');
@@ -296,7 +312,10 @@
             // Leave the launcher available after closing; it reopens the last field.
         });
         document.addEventListener('keydown', event => {
-            if (event.key === 'Escape' && !panel.hidden) close();
+            if (event.key === 'Escape' && !event.defaultPrevented && !panel.hidden) close();
+        });
+        document.addEventListener('math-location-change', event => {
+            if (active === event.target) location.querySelector('strong').textContent = event.detail.path;
         });
         ['#conversion-origen', '#romanos-direccion', '#input-n'].forEach(selector => {
             const control = document.querySelector(selector);
